@@ -1,0 +1,342 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|c:\\users\\inspiron\\documents\\playwright projects\\mesaentradamiddleman\\ipsstloader\\ipsstloader\\application\\services\\busquedaservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|solutionrelative:ipsstloader\\application\\services\\busquedaservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|c:\\users\\inspiron\\documents\\playwright projects\\mesaentradamiddleman\\ipsstloader\\ipsstloader\\application\\workflows\\resolucionworkflow.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|solutionrelative:ipsstloader\\application\\workflows\\resolucionworkflow.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|c:\\users\\inspiron\\documents\\playwright projects\\mesaentradamiddleman\\ipsstloader\\ipsstloader\\application\\workflows\\paseworkflow.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|solutionrelative:ipsstloader\\application\\workflows\\paseworkflow.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|c:\\users\\inspiron\\documents\\playwright projects\\mesaentradamiddleman\\ipsstloader\\ipsstloader\\application\\services\\receptionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|solutionrelative:ipsstloader\\application\\services\\receptionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|c:\\users\\inspiron\\documents\\playwright projects\\mesaentradamiddleman\\ipsstloader\\ipsstloader\\domain\\entities\\expediente.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|solutionrelative:ipsstloader\\domain\\entities\\expediente.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|c:\\users\\inspiron\\documents\\playwright projects\\mesaentradamiddleman\\ipsstloader\\ipsstloader\\domain\\interface\\iautomaterecepcion.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|solutionrelative:ipsstloader\\domain\\interface\\iautomaterecepcion.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|c:\\users\\inspiron\\documents\\playwright projects\\mesaentradamiddleman\\ipsstloader\\ipsstloader\\domain\\interface\\iautomatepase.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|solutionrelative:ipsstloader\\domain\\interface\\iautomatepase.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|c:\\users\\inspiron\\documents\\playwright projects\\mesaentradamiddleman\\ipsstloader\\ipsstloader\\domain\\interface\\iautomateresolucion.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|solutionrelative:ipsstloader\\domain\\interface\\iautomateresolucion.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|c:\\users\\inspiron\\documents\\playwright projects\\mesaentradamiddleman\\ipsstloader\\ipsstloader\\domain\\interface\\iautomatebusqueda.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|solutionrelative:ipsstloader\\domain\\interface\\iautomatebusqueda.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|c:\\users\\inspiron\\documents\\playwright projects\\mesaentradamiddleman\\ipsstloader\\ipsstloader\\domain\\interface\\iuploadjobrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|solutionrelative:ipsstloader\\domain\\interface\\iuploadjobrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|c:\\users\\inspiron\\documents\\playwright projects\\mesaentradamiddleman\\ipsstloader\\ipsstloader\\domain\\interface\\iexpedienterepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|solutionrelative:ipsstloader\\domain\\interface\\iexpedienterepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|c:\\users\\inspiron\\documents\\playwright projects\\mesaentradamiddleman\\ipsstloader\\ipsstloader\\domain\\enums\\uploadstatus.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|solutionrelative:ipsstloader\\domain\\enums\\uploadstatus.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|c:\\users\\inspiron\\documents\\playwright projects\\mesaentradamiddleman\\ipsstloader\\ipsstloader\\domain\\entities\\uploadjob.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|solutionrelative:ipsstloader\\domain\\entities\\uploadjob.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|c:\\users\\inspiron\\documents\\playwright projects\\mesaentradamiddleman\\ipsstloader\\ipsstloader\\domain\\entities\\resoluciondata.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|solutionrelative:ipsstloader\\domain\\entities\\resoluciondata.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|c:\\users\\inspiron\\documents\\playwright projects\\mesaentradamiddleman\\ipsstloader\\ipsstloader\\domain\\validation\\validationresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|solutionrelative:ipsstloader\\domain\\validation\\validationresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|c:\\users\\inspiron\\documents\\playwright projects\\mesaentradamiddleman\\ipsstloader\\ipsstloader\\domain\\validation\\expvalidation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|solutionrelative:ipsstloader\\domain\\validation\\expvalidation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|c:\\users\\inspiron\\documents\\playwright projects\\mesaentradamiddleman\\ipsstloader\\ipsstloader\\domain\\validation\\expvalidationcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|solutionrelative:ipsstloader\\domain\\validation\\expvalidationcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|c:\\users\\inspiron\\documents\\playwright projects\\mesaentradamiddleman\\ipsstloader\\ipsstloader\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|solutionrelative:ipsstloader\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|c:\\users\\inspiron\\documents\\playwright projects\\mesaentradamiddleman\\ipsstloader\\ipsstloader\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{401EE9CF-8391-4DB9-9C90-C7F353E288B0}|IPSSTLoader\\IPSSTLoader.csproj|solutionrelative:ipsstloader\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 3,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "ResolucionWorkflow.cs",
+              "DocumentMoniker": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Application\\Workflows\\ResolucionWorkflow.cs",
+              "RelativeDocumentMoniker": "IPSSTLoader\\Application\\Workflows\\ResolucionWorkflow.cs",
+              "ToolTip": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Application\\Workflows\\ResolucionWorkflow.cs",
+              "RelativeToolTip": "IPSSTLoader\\Application\\Workflows\\ResolucionWorkflow.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-27T23:54:57.734Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "PaseWorkflow.cs",
+              "DocumentMoniker": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Application\\Workflows\\PaseWorkflow.cs",
+              "RelativeDocumentMoniker": "IPSSTLoader\\Application\\Workflows\\PaseWorkflow.cs",
+              "ToolTip": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Application\\Workflows\\PaseWorkflow.cs",
+              "RelativeToolTip": "IPSSTLoader\\Application\\Workflows\\PaseWorkflow.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-27T23:54:36.832Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "ReceptionService.cs",
+              "DocumentMoniker": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Application\\Services\\ReceptionService.cs",
+              "RelativeDocumentMoniker": "IPSSTLoader\\Application\\Services\\ReceptionService.cs",
+              "ToolTip": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Application\\Services\\ReceptionService.cs",
+              "RelativeToolTip": "IPSSTLoader\\Application\\Services\\ReceptionService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-27T23:54:17.196Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "BusquedaService.cs",
+              "DocumentMoniker": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Application\\Services\\BusquedaService.cs",
+              "RelativeDocumentMoniker": "IPSSTLoader\\Application\\Services\\BusquedaService.cs",
+              "ToolTip": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Application\\Services\\BusquedaService.cs",
+              "RelativeToolTip": "IPSSTLoader\\Application\\Services\\BusquedaService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABoAAABUAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-27T23:54:02.596Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Expediente.cs",
+              "DocumentMoniker": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Entities\\Expediente.cs",
+              "RelativeDocumentMoniker": "IPSSTLoader\\Domain\\Entities\\Expediente.cs",
+              "ToolTip": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Entities\\Expediente.cs",
+              "RelativeToolTip": "IPSSTLoader\\Domain\\Entities\\Expediente.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAtAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-27T23:49:29.325Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "IAutomateRecepcion.cs",
+              "DocumentMoniker": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Interface\\IAutomateRecepcion.cs",
+              "RelativeDocumentMoniker": "IPSSTLoader\\Domain\\Interface\\IAutomateRecepcion.cs",
+              "ToolTip": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Interface\\IAutomateRecepcion.cs",
+              "RelativeToolTip": "IPSSTLoader\\Domain\\Interface\\IAutomateRecepcion.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAABKAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-27T23:37:20.22Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "IAutomateResolucion.cs",
+              "DocumentMoniker": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Interface\\IAutomateResolucion.cs",
+              "RelativeDocumentMoniker": "IPSSTLoader\\Domain\\Interface\\IAutomateResolucion.cs",
+              "ToolTip": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Interface\\IAutomateResolucion.cs",
+              "RelativeToolTip": "IPSSTLoader\\Domain\\Interface\\IAutomateResolucion.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-27T23:37:07.884Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "IAutomatePase.cs",
+              "DocumentMoniker": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Interface\\IAutomatePase.cs",
+              "RelativeDocumentMoniker": "IPSSTLoader\\Domain\\Interface\\IAutomatePase.cs",
+              "ToolTip": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Interface\\IAutomatePase.cs",
+              "RelativeToolTip": "IPSSTLoader\\Domain\\Interface\\IAutomatePase.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAyAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-27T23:36:55.181Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "IAutomateBusqueda.cs",
+              "DocumentMoniker": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Interface\\IAutomateBusqueda.cs",
+              "RelativeDocumentMoniker": "IPSSTLoader\\Domain\\Interface\\IAutomateBusqueda.cs",
+              "ToolTip": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Interface\\IAutomateBusqueda.cs",
+              "RelativeToolTip": "IPSSTLoader\\Domain\\Interface\\IAutomateBusqueda.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAA4AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-27T23:36:43.761Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "IUploadJobRepository.cs",
+              "DocumentMoniker": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Interface\\IUploadJobRepository.cs",
+              "RelativeDocumentMoniker": "IPSSTLoader\\Domain\\Interface\\IUploadJobRepository.cs",
+              "ToolTip": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Interface\\IUploadJobRepository.cs",
+              "RelativeToolTip": "IPSSTLoader\\Domain\\Interface\\IUploadJobRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-27T23:35:47.156Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "IExpedienteRepository.cs",
+              "DocumentMoniker": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Interface\\IExpedienteRepository.cs",
+              "RelativeDocumentMoniker": "IPSSTLoader\\Domain\\Interface\\IExpedienteRepository.cs",
+              "ToolTip": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Interface\\IExpedienteRepository.cs",
+              "RelativeToolTip": "IPSSTLoader\\Domain\\Interface\\IExpedienteRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAsAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-27T23:30:18.832Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "UploadJob.cs",
+              "DocumentMoniker": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Entities\\UploadJob.cs",
+              "RelativeDocumentMoniker": "IPSSTLoader\\Domain\\Entities\\UploadJob.cs",
+              "ToolTip": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Entities\\UploadJob.cs",
+              "RelativeToolTip": "IPSSTLoader\\Domain\\Entities\\UploadJob.cs",
+              "ViewState": "AgIAAAsAAAAAAAAAAAAAACEAAAAWAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-27T19:36:28.569Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "UploadStatus.cs",
+              "DocumentMoniker": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Enums\\UploadStatus.cs",
+              "RelativeDocumentMoniker": "IPSSTLoader\\Domain\\Enums\\UploadStatus.cs",
+              "ToolTip": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Enums\\UploadStatus.cs",
+              "RelativeToolTip": "IPSSTLoader\\Domain\\Enums\\UploadStatus.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAOAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-27T19:06:26.144Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "ResolucionData.cs",
+              "DocumentMoniker": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Entities\\ResolucionData.cs",
+              "RelativeDocumentMoniker": "IPSSTLoader\\Domain\\Entities\\ResolucionData.cs",
+              "ToolTip": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Entities\\ResolucionData.cs",
+              "RelativeToolTip": "IPSSTLoader\\Domain\\Entities\\ResolucionData.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAUAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-27T18:31:14.132Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "ExpValidationContext.cs",
+              "DocumentMoniker": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Validation\\ExpValidationContext.cs",
+              "RelativeDocumentMoniker": "IPSSTLoader\\Domain\\Validation\\ExpValidationContext.cs",
+              "ToolTip": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Validation\\ExpValidationContext.cs",
+              "RelativeToolTip": "IPSSTLoader\\Domain\\Validation\\ExpValidationContext.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAOAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-27T17:48:39.6Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "ValidationResult.cs",
+              "DocumentMoniker": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Validation\\ValidationResult.cs",
+              "RelativeDocumentMoniker": "IPSSTLoader\\Domain\\Validation\\ValidationResult.cs",
+              "ToolTip": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Validation\\ValidationResult.cs",
+              "RelativeToolTip": "IPSSTLoader\\Domain\\Validation\\ValidationResult.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-27T16:39:06.109Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "ExpValidation.cs",
+              "DocumentMoniker": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Validation\\ExpValidation.cs",
+              "RelativeDocumentMoniker": "IPSSTLoader\\Domain\\Validation\\ExpValidation.cs",
+              "ToolTip": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\Domain\\Validation\\ExpValidation.cs",
+              "RelativeToolTip": "IPSSTLoader\\Domain\\Validation\\ExpValidation.cs",
+              "ViewState": "AgIAABEAAAAAAAAAAAAmwD8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-27T17:49:03.815Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "MainWindow.xaml",
+              "DocumentMoniker": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\MainWindow.xaml",
+              "RelativeDocumentMoniker": "IPSSTLoader\\MainWindow.xaml",
+              "ToolTip": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\MainWindow.xaml",
+              "RelativeToolTip": "IPSSTLoader\\MainWindow.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-06-27T15:05:51.879Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "MainWindow.xaml.cs",
+              "DocumentMoniker": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\MainWindow.xaml.cs",
+              "RelativeDocumentMoniker": "IPSSTLoader\\MainWindow.xaml.cs",
+              "ToolTip": "C:\\Users\\Inspiron\\Documents\\Playwright Projects\\MesaEntradaMiddleMan\\IPSSTLoader\\IPSSTLoader\\MainWindow.xaml.cs",
+              "RelativeToolTip": "IPSSTLoader\\MainWindow.xaml.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAOAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-27T15:05:41.835Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
