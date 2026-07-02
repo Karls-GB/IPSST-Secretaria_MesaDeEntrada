@@ -11,6 +11,5 @@ public class Expediente
     public ResolucionData? Resolucion { get; set; }
     public PaseData? Pase {  get; set; }
     public DateTime CreatedAt { get; set; }
-    public UploadJob? UploadJob { get; set; }
 
 }

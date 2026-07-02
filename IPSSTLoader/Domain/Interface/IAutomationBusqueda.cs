@@ -5,7 +5,7 @@ using System.Text;
 
 namespace IPSSTLoader.Domain.Interface;
 
-public interface IAutomateBusqueda
+public interface IAutomationBusqueda
 {
     Task<Expediente?> SearchAsync(string nroExpediente);
 }

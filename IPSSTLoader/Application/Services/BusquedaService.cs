@@ -9,9 +9,9 @@ namespace IPSSTLoader.Application.Services;
 
 public class BusquedaService
 {
-    private readonly IAutomateBusqueda _automationBusqueda;
+    private readonly IAutomationBusqueda _automationBusqueda;
     private readonly ExpValidation _expValidation;
-    public BusquedaService(IAutomateBusqueda automationBusqueda, ExpValidation expValidation)
+    public BusquedaService(IAutomationBusqueda automationBusqueda, ExpValidation expValidation)
     {
         _automationBusqueda = automationBusqueda;
         _expValidation = expValidation;

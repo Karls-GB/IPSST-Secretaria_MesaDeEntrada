@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("IPSSTLoader")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a6570cd83f39d5225b4f06e4e598f3048b514d80")]
 [assembly: System.Reflection.AssemblyProductAttribute("IPSSTLoader")]
 [assembly: System.Reflection.AssemblyTitleAttribute("IPSSTLoader")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

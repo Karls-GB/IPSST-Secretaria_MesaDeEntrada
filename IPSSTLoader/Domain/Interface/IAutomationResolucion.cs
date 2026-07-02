@@ -5,7 +5,7 @@ using System.Text;
 
 namespace IPSSTLoader.Domain.Interface;
 
-public interface IAutomateResolucion
+public interface IAutomationResolucion
 {
     Task<bool> SubmitAsync(Expediente expediente);
 }

@@ -4,6 +4,6 @@ using System.Text;
 
 namespace IPSSTLoader.Application.Services;
 
-internal class ReceptionService
+internal class RecepcionService
 {
 }

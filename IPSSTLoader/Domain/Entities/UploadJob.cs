@@ -9,12 +9,17 @@ public class UploadJob
 {
     public Guid Id { get; set; }
     public Guid ExpedienteId { get; set; }
+    public string NroExpediente { get; set; } = string.Empty;
     public UploadStatus Status { get; set; } = UploadStatus.Pending;
     public int RetryCount { get; set; }
     public string? LastError { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? StartedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
+
+    //Almacenar Datos Ingresados
+    public string? PaseDataJson { get; set; }
+    public string? ResolucionDataJson { get; set; }
 
     //Tabla de Transiciones
     public bool CanTransitionTo(UploadStatus newStatus)
