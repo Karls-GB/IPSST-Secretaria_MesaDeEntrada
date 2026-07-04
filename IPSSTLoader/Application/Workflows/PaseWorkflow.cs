@@ -24,7 +24,7 @@ public class PaseWorkflow
         _expValidation = expValidation;
     }
 
-    public async Task ExecuteAsync(Expediente expediente, bool isRetry = false, int maxRetries = 3)
+    public async Task ExecuteAsync(Expediente expediente, bool isRetry = false, int maxRetries = 3, UploadJob? existingJob = null)
     {
         //Asignar Id si no lo tiene
         if(expediente.Id == default)
@@ -39,16 +39,28 @@ public class PaseWorkflow
             throw new ArgumentException(string.Join(", ", validationResult.Errors));
         }
 
-        //Crear Trabajo de subida
-        var job = new UploadJob
+        //Crear Trabajo de subida O Usar Uno Existente
+        UploadJob job;
+
+        if (existingJob != null)
         {
-            Id = Guid.NewGuid(),
-            ExpedienteId = expediente.Id,
-            NroExpediente = expediente.NroExpediente,
-            Status = UploadStatus.Pending,
-            CreatedAt = DateTime.UtcNow,
-            PaseDataJson = JsonSerializer.Serialize(expediente.Pase)
-        };
+            job = existingJob;
+            job.PaseDataJson = JsonSerializer.Serialize(expediente.Pase);
+        }
+        else
+        {
+            job = new UploadJob
+            {
+                Id = Guid.NewGuid(),
+                ExpedienteId = expediente.Id,
+                NroExpediente = expediente.NroExpediente,
+                Status = UploadStatus.Pending,
+                CreatedAt = DateTime.UtcNow,
+                PaseDataJson = JsonSerializer.Serialize(expediente.Pase)
+            };
+
+            await _uploadJobRepository.AddAsync(job);
+        }
 
         //Comprobar si se esta reintentando la subida
         if (isRetry)
@@ -56,7 +68,7 @@ public class PaseWorkflow
             job.RetryCount++;
         }
 
-        await _uploadJobRepository.AddAsync(job);
+        await _uploadJobRepository.UpdateAsync(job);
 
         //Ejecucion y Logica de Reintento
         int attempt = 0;

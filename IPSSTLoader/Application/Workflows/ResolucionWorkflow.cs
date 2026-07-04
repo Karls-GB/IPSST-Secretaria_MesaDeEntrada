@@ -1,9 +1,11 @@
 ﻿using IPSSTLoader.Domain.Entities;
+using IPSSTLoader.Domain.Enums;
 using IPSSTLoader.Domain.Interface;
 using IPSSTLoader.Domain.Validation;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json;
 
 namespace IPSSTLoader.Application.Workflows;
 
@@ -48,19 +50,43 @@ public class ResolucionWorkflow
             throw new ArgumentException(string.Join(", ", paseValidation.Errors));
         }
 
+        //Crear Trabajo
+        var job = new UploadJob
+        {
+            Id = Guid.NewGuid(),
+            ExpedienteId = expediente.Id,
+            NroExpediente = expediente.NroExpediente,
+            Status = UploadStatus.Pending,
+            CreatedAt = DateTime.UtcNow,
+            ResolucionDataJson = JsonSerializer.Serialize(expediente.Resolucion)
+        };
+
+        if (isRetry)
+        {
+            job.RetryCount++;
+        }
+
+        await _uploadJobRepository.AddAsync(job);
+
         //Parte 1: Cargar Resolucion
         int attempt = 0;
         bool resolucionSuccess = false;
 
         while(attempt < maxRetries && !resolucionSuccess)
         {
+            job.Status = UploadStatus.InProgress;
+            job.StartedAt = DateTime.UtcNow;
+            await _uploadJobRepository.UpdateAsync(job);
+
             try
             {
                 resolucionSuccess = await _automationResolucion.SubmitAsync(expediente);
 
                 if (!resolucionSuccess)
                 {
+                    job.RetryCount++;
                     attempt++;
+                    job.LastError = "Fallo de Resolucion en Playwright";
 
                     if(attempt < maxRetries)
                     {
@@ -70,10 +96,14 @@ public class ResolucionWorkflow
             }
             catch (Exception ex)
             {
+                job.RetryCount++;
                 attempt++;
+                job.LastError = ex.Message;
 
                 if(attempt >= maxRetries)
                 {
+                    job.Status = UploadStatus.Failed;
+                    await _uploadJobRepository.UpdateAsync(job);
                     throw;
                 }
 
@@ -83,7 +113,18 @@ public class ResolucionWorkflow
 
         if (!resolucionSuccess)
         {
-            throw new Exception("Se Alcanzaron los Intentos Maximos de Resolucion")
+            job.Status = UploadStatus.Failed;
+            job.LastError = "Se Alcanzaron los Intentos Maximos de Resolucion";
+            await _uploadJobRepository.UpdateAsync(job);
+            return;
         }
+
+        //Resolucion Exitosa
+        job.Status = UploadStatus.ResolucionCompleted;
+        job.RetryCount = 0;
+        await _uploadJobRepository.UpdateAsync(job);
+        
+        //Ejecutar Pase
+        await _paseWorkflow.ExecuteAsync(expediente, maxRetries: maxRetries, existingJob: job);
     }
 }

@@ -9,6 +9,7 @@ public class UploadJob
 {
     public Guid Id { get; set; }
     public Guid ExpedienteId { get; set; }
+    public Guid? SuperseededByJobId { get; set; }
     public string NroExpediente { get; set; } = string.Empty;
     public UploadStatus Status { get; set; } = UploadStatus.Pending;
     public int RetryCount { get; set; }
