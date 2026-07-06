@@ -16,7 +16,7 @@ public class BusquedaService
         _automationBusqueda = automationBusqueda;
         _expValidation = expValidation;
     }
-    public async Task<Expediente?> SearchAsync(string nroExpediente)
+    public async Task<ResultadoBusqueda?> SearchAsync(string nroExpediente)
     {
         //Validacion de Numero de Expediente
         var tempExpediente = new Expediente { NroExpediente = nroExpediente };
@@ -26,6 +26,7 @@ public class BusquedaService
         {
             throw new ArgumentException(string.Join(", ", validationResult.Errors));
         }
+
         return await _automationBusqueda.SearchAsync(nroExpediente);
     }
 }

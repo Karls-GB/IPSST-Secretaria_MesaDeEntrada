@@ -7,5 +7,5 @@ namespace IPSSTLoader.Domain.Interface;
 
 public interface IAutomationBusqueda
 {
-    Task<Expediente?> SearchAsync(string nroExpediente);
+    Task<ResultadoBusqueda?> SearchAsync(string nroExpediente);
 }

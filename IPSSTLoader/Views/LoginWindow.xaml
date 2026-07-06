@@ -1,0 +1,29 @@
+﻿<Window x:Class="IPSSTLoader.Views.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:IPSSTLoader.Views"
+        mc:Ignorable="d"
+        Title="Iniciar Sesion" Height="220" Width="350"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Usuario" Grid.Row="0" Margin="0,0,0,5"/>
+        <TextBox x:Name="UsernameBox" Grid.Row="0" Margin="60,0,0,5"/>
+
+        <TextBlock Text="Contraseña" Grid.Row="1" Margin="0,10,0,5"/>
+        <PasswordBox x:Name="PasswordBox" Grid.Row="1" Margin="70,10,0,5"/>
+
+        <Button x:Name="LoginButton" Content="Ingresar" Grid.Row="3" 
+                Margin="0,20,0,0" Height="30"
+                Click="LoginButton_Click"/>
+    </Grid>
+</Window>
