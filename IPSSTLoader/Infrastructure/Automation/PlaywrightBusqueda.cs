@@ -13,6 +13,7 @@ public class PlaywrightBusqueda : IAutomationBusqueda
     private readonly PlaywrightSession _session;
 
     private const string SearchUrl = "http://webinterna.ipsst.local:8080/expedientes/hviewbuscarexpte.aspx?Expedientes";
+    private const string PaseUrl = "http://webinterna.ipsst.local:8080/expedientes/hviewexppases.aspx?Pases";
 
     public PlaywrightBusqueda(PlaywrightSession session)
     {
@@ -57,6 +58,8 @@ public class PlaywrightBusqueda : IAutomationBusqueda
             var estadoRaw = await page.InputValueAsync("input[name='EXPESTADODESCRIPCION']");
             var oficinaRaw = await page.InputValueAsync("input[name='W0050_EXPOFINOMBRE']");
             var sucursalRaw = await page.InputValueAsync("input[name='W0050_EXPSUCURSALNOMBRE']");
+            var fechaPaseRaw = await page.InputValueAsync("input[name='W0050_EXPPASESFECHAHORA']");
+            var usuarioPaseRaw = await page.InputValueAsync("#span_W0050_EXPPASESUSUID");
 
             DateTime? fechaAlta = null;
             if (DateTime.TryParseExact(fechaAltaRaw, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
@@ -70,7 +73,13 @@ public class PlaywrightBusqueda : IAutomationBusqueda
                 folios = parsedFolios;
             }
 
-            return new ResultadoBusqueda
+            DateTime? fechaPase = null;
+            if(DateTime.TryParseExact(fechaPaseRaw, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDatePase))
+            {
+                fechaPase = parsedDatePase;
+            }
+
+            var result = new ResultadoBusqueda
             {
                 NroExpediente = nroExpedienteRaw,
                 ExpedienteIdWeb = expId,
@@ -82,8 +91,73 @@ public class PlaywrightBusqueda : IAutomationBusqueda
                 CuitCuil = cuitCuil,
                 Estado = estadoRaw,
                 Oficina = oficinaRaw,
-                Sucursal = sucursalRaw
+                Sucursal = sucursalRaw,
+                FechaPase = fechaPaseRaw,
+                UsuarioPase = usuarioPaseRaw
             };
+
+            //Logica para encontrar quien lo trabajo
+            bool enSecretaria = oficinaRaw?.Contains("SECRETARIA", StringComparison.OrdinalIgnoreCase) == true;
+            bool enTransito = estadoRaw?.Contains("EN TRANSITO", StringComparison.OrdinalIgnoreCase) == true;
+
+            result.Observaciones = await ObtenerObservacionesAsync(page, expId);
+
+            if (enSecretaria && !enTransito)
+            {
+                result.TrabajadoPor = await ObtenerTrabajadoPorAsync(page, nroExpediente);
+            }
+
+            return result;
         });
+    }
+
+    private async Task<string?> ObtenerTrabajadoPorAsync(IPage page, string nroExpediente)
+    {
+        await page.GotoAsync(PaseUrl);
+
+        await page.FillAsync("input[name='W0009_TEXTOBUSQUEDA']", nroExpediente);
+        await page.ClickAsync("input[name='W0009BUTTON2']");
+
+        await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        return await page.InputValueAsync("input[name='W0009EXPPASEUSUARIO_0001']");
+    }
+
+    private async Task<List<ObservacionItem>> ObtenerObservacionesAsync(IPage page, string expId)
+    {
+        var observaciones = new List<ObservacionItem>();
+
+        await page.ClickAsync("#W0047TAB_0002");
+        await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        while (true)
+        {
+            var rowCountRaw = await page.InputValueAsync("input[name='W0050nRC_Gridobserv']");
+            int.TryParse(rowCountRaw, out var rowCount);
+
+            for (int i = 1; i <= rowCount; i++)
+            {
+                var suffix = i.ToString("D4");
+
+                observaciones.Add(new ObservacionItem
+                {
+                    FechaHora = await page.InputValueAsync($"input[name='W0050EXPOBSERVFECHA_{suffix}']"),
+                    Descripcion = await page.InputValueAsync($"input[name='W0050EXPOBSERVACIONES_{suffix}']"),
+                    Usuario = await page.InputValueAsync($"input[name='W0050EXPOBSERVUSUNOMBRE_{suffix}']"),
+                    Oficina = await page.InputValueAsync($"input[name='W0050EXPOBSERVOFINOMBRECOMPLETO_{suffix}']")
+                });
+            }
+
+            var eofRaw = await page.InputValueAsync("input[name='W0050Gridobserv_nEOF']");
+            if( eofRaw == "1")
+            {
+                break;
+            }
+
+            await page.ClickAsync("#W0050SIGUIENTE");
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        }
+
+        return observaciones;
     }
 }

@@ -5,8 +5,35 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:IPSSTLoader"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="720" Width="1280"
+        PreviewKeyDown="Window_PreviewKeyDown">
+    
     <Grid>
+
+        <TabControl x:Name="MainTabControl" Grid.ColumnSpan="2" SelectionChanged="TabControl_SelectionChanged">
+
+            <TabItem Header="Busqueda">
+                <Grid Margin="20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Orientation="Horizontal" Grid.Row="0">
+                        <TextBlock Text="Nro. Expediente:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <TextBox x:Name="NroExpedienteBox" Width="250" VerticalAlignment="Center"/>
+                        <Button x:Name="BuscarButton" Content="Buscar" Margin="10,0,0,0"
+                                Padding="15,5" Click="BuscarButton_Click"/>
+                    </StackPanel>
+
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Pase"/>
+            <TabItem Header="Resolucion"/>
+            <TabItem Header="Recepcion"/>
+
+        </TabControl>
 
     </Grid>
 </Window>

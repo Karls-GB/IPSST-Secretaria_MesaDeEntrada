@@ -17,4 +17,8 @@ public class ResultadoBusqueda
     public string? Estado { get; set; }
     public string? Oficina { get; set; }
     public string? Sucursal { get; set; }
+    public string? TrabajadoPor { get; set; }
+    public List<ObservacionItem> Observaciones { get; set; } = new();
+    public string? UsuarioPase { get; set; }
+    public string? FechaPase { get; set; }
 }

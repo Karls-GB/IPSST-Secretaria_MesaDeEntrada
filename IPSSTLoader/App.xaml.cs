@@ -73,7 +73,7 @@ namespace IPSSTLoader
             services.AddDbContext<AppDbContext>(options => options.UseSqlite("Data Source = ipsstlaoder.db"));
             services.AddScoped<IUploadJobRepository, UploadJobRepository>();
             services.AddScoped<IAutomationBusqueda, PlaywrightBusqueda>();
-            //services.AddScoped<IAutomationPase, PlaywrightPase>();
+            services.AddScoped<IAutomationPase, PlaywrightPase>();
             //services.AddScoped<IAutomationRecepcion, PlaywrightRecepcion>();
             //services.AddScoped<IAutomationResolucion, PlaywrightResolucion>();
 
