@@ -72,7 +72,10 @@ namespace IPSSTLoader
             Log.Information("Usuario {Username} logueado exitosamente", loginWindowUsuario);
 
             var mainWindow = ServiceProvider.GetRequiredService<MainWindow>();
+            this.MainWindow = mainWindow;
+            this.ShutdownMode = ShutdownMode.OnMainWindowClose;
             mainWindow.Show();
+            
         }
 
         private void ConfigurarLogging()

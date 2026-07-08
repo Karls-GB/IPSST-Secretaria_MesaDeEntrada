@@ -68,7 +68,7 @@
                   CanUserAddRows="False" CanUserDeleteRows="False">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Fecha/Hora" Binding="{Binding FechaHora}" Width="150"/>
-                <DataGridTextColumn Header="Observaciones" Binding="{Binding Texto}" Width="*"/>
+                <DataGridTextColumn Header="Observaciones" Binding="{Binding Descripcion}" Width="*"/>
                 <DataGridTextColumn Header="Usuario" Binding="{Binding Usuario}" Width="180"/>
                 <DataGridTextColumn Header="Oficina" Binding="{Binding Oficina}" Width="200"/>
             </DataGrid.Columns>

@@ -6,7 +6,8 @@
         xmlns:local="clr-namespace:IPSSTLoader"
         mc:Ignorable="d"
         Title="MainWindow" Height="720" Width="1280"
-        PreviewKeyDown="Window_PreviewKeyDown">
+        PreviewKeyDown="Window_PreviewKeyDown"
+        WindowStartupLocation="CenterScreen">
     
     <Grid>
 

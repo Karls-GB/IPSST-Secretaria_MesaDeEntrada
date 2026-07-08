@@ -18,7 +18,7 @@ public class PlaywrightSession : IAsyncDisposable
 
     private readonly bool _headless;
     private readonly TimeSpan _keepAliveInterval = TimeSpan.FromMinutes(15);
-    private string _loginUrl => $"{BaseUrl}/hexplogin.aspx";
+    private string _loginUrl => $"{BaseUrl}/expedientes/hexplogin.aspx";
     private readonly ILogger<PlaywrightSession> _logger;
 
     public string BaseUrl { get; }
@@ -35,8 +35,7 @@ public class PlaywrightSession : IAsyncDisposable
         _playwright = await Playwright.CreateAsync();
         _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
         {
-            Headless = _headless,
-            Channel = "chrome"
+            Headless = _headless
         });
         _page = await _browser.NewPageAsync();
 

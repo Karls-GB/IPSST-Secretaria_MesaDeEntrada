@@ -14,8 +14,8 @@ public class PlaywrightBusqueda : IAutomationBusqueda
     private readonly PlaywrightSession _session;
     private readonly ILogger<PlaywrightBusqueda> _logger;
 
-    private string SearchUrl => $"{_session.BaseUrl}/hviewbuscarexpte.aspx?Expedientes";
-    private string PaseUrl => $"{_session.BaseUrl}/hviewexppases.aspx?Pases";
+    private string SearchUrl => $"{_session.BaseUrl}/expedientes/hviewbuscarexpte.aspx?Expedientes";
+    private string PaseUrl => $"{_session.BaseUrl}/expedientes/hviewexppases.aspx?Pases";
 
     public PlaywrightBusqueda(PlaywrightSession session, ILogger<PlaywrightBusqueda> logger)
     {
@@ -65,7 +65,7 @@ public class PlaywrightBusqueda : IAutomationBusqueda
             var oficinaRaw = await page.InputValueAsync("input[name='W0050_EXPOFINOMBRE']");
             var sucursalRaw = await page.InputValueAsync("input[name='W0050_EXPSUCURSALNOMBRE']");
             var fechaPaseRaw = await page.InputValueAsync("input[name='W0050_EXPPASESFECHAHORA']");
-            var usuarioPaseRaw = await page.InputValueAsync("#span_W0050_EXPPASESUSUID");
+            var usuarioPaseRaw = await page.InputValueAsync("input[name='W0050_EXPPASESUSUID']");
 
             DateTime? fechaAlta = null;
             if (DateTime.TryParseExact(fechaAltaRaw, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
