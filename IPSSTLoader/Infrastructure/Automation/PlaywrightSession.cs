@@ -1,4 +1,5 @@
-﻿using Microsoft.Playwright;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Playwright;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -17,11 +18,16 @@ public class PlaywrightSession : IAsyncDisposable
 
     private readonly bool _headless;
     private readonly TimeSpan _keepAliveInterval = TimeSpan.FromMinutes(15);
-    private readonly string _loginUrl = "http://webinterna.ipsst.local:8080/expedientes/hexplogin.aspx";
+    private string _loginUrl => $"{BaseUrl}/hexplogin.aspx";
+    private readonly ILogger<PlaywrightSession> _logger;
 
-    public PlaywrightSession(bool headless)
+    public string BaseUrl { get; }
+
+    public PlaywrightSession(bool headless, string baseUrl, ILogger<PlaywrightSession> logger)
     {
         _headless = headless;
+        _logger = logger;
+        BaseUrl = baseUrl;
     }
 
     public async Task InitializeAsync()
@@ -60,6 +66,11 @@ public class PlaywrightSession : IAsyncDisposable
             if (loggedIn)
             {
                 _homeUrl = _page.Url;
+                _logger.LogInformation("Login exitoso");
+            }
+            else
+            {
+                _logger.LogWarning("Login fallido");
             }
 
             _lastActivity = DateTime.UtcNow;
@@ -114,9 +125,9 @@ public class PlaywrightSession : IAsyncDisposable
             await _page.GotoAsync(_homeUrl);
             _lastActivity = DateTime.UtcNow;
         }
-        catch
+        catch (Exception ex)
         {
-
+            _logger.LogWarning(ex, "Error al mantener la sesion activa");
         }
         finally
         {

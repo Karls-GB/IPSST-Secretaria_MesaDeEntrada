@@ -1,5 +1,6 @@
 ﻿using IPSSTLoader.Domain.Entities;
 using IPSSTLoader.Domain.Interface;
+using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 using System;
 using System.Collections.Generic;
@@ -11,19 +12,23 @@ namespace IPSSTLoader.Infrastructure.Automation;
 public class PlaywrightBusqueda : IAutomationBusqueda
 {
     private readonly PlaywrightSession _session;
+    private readonly ILogger<PlaywrightBusqueda> _logger;
 
-    private const string SearchUrl = "http://webinterna.ipsst.local:8080/expedientes/hviewbuscarexpte.aspx?Expedientes";
-    private const string PaseUrl = "http://webinterna.ipsst.local:8080/expedientes/hviewexppases.aspx?Pases";
+    private string SearchUrl => $"{_session.BaseUrl}/hviewbuscarexpte.aspx?Expedientes";
+    private string PaseUrl => $"{_session.BaseUrl}/hviewexppases.aspx?Pases";
 
-    public PlaywrightBusqueda(PlaywrightSession session)
+    public PlaywrightBusqueda(PlaywrightSession session, ILogger<PlaywrightBusqueda> logger)
     {
         _session = session;
+        _logger = logger;
     }
 
     public async Task<ResultadoBusqueda?> SearchAsync(string nroExpediente)
     {
         return await _session.RunAsync(async page =>
         {
+            _logger.LogDebug("Navegando para buscar expediente: {NroExpediente}", nroExpediente);
+
             await page.GotoAsync(SearchUrl);
 
             await page.FillAsync("input[name='W0007_TEXTOBUSQUEDA']", nroExpediente);
@@ -37,6 +42,7 @@ public class PlaywrightBusqueda : IAutomationBusqueda
 
             if (rowCount == 0)
             {
+                _logger.LogInformation("No se encontraron resultados para el expediente: {NroExpediente}", nroExpediente);
                 return null;
             }
 
@@ -101,10 +107,13 @@ public class PlaywrightBusqueda : IAutomationBusqueda
             bool enTransito = estadoRaw?.Contains("EN TRANSITO", StringComparison.OrdinalIgnoreCase) == true;
 
             result.Observaciones = await ObtenerObservacionesAsync(page, expId);
+            _logger.LogInformation("Busqueda las observaciones de {NroExpediente} completada: {CantidadObservaciones} observaciones encontradas", nroExpediente, result.Observaciones.Count);
 
             if (enSecretaria && !enTransito)
             {
+                _logger.LogDebug("Buscando usuario asignado al expediente {NroExpediente} (Oficina: {Oficina}, Estado: {Estado})", nroExpediente, oficinaRaw, estadoRaw);
                 result.TrabajadoPor = await ObtenerTrabajadoPorAsync(page, nroExpediente);
+                _logger.LogDebug("Busqueda del usuario asignado al expediente {NroExpediente} completada: {TrabajadoPor}", nroExpediente, result.TrabajadoPor);
             }
 
             return result;
@@ -130,10 +139,14 @@ public class PlaywrightBusqueda : IAutomationBusqueda
         await page.ClickAsync("#W0047TAB_0002");
         await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
+        int pagina = 1;
+
         while (true)
         {
             var rowCountRaw = await page.InputValueAsync("input[name='W0050nRC_Gridobserv']");
             int.TryParse(rowCountRaw, out var rowCount);
+
+            _logger.LogDebug("Leyendo página {Pagina} de observaciones. Cantidad de filas: {RowCount}", pagina, rowCount);
 
             for (int i = 1; i <= rowCount; i++)
             {
@@ -156,6 +169,7 @@ public class PlaywrightBusqueda : IAutomationBusqueda
 
             await page.ClickAsync("#W0050SIGUIENTE");
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            pagina++;
         }
 
         return observaciones;

@@ -6,6 +6,7 @@ namespace IPSSTLoader.Domain.Validation;
 
 public enum ExpValidationContext
 {
+    Busqueda,
     Pase,
     Resolucion
 }

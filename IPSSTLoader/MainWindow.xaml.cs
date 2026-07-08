@@ -1,5 +1,6 @@
 ﻿using IPSSTLoader.Application.Services;
 using IPSSTLoader.Application.Workflows;
+using IPSSTLoader.Views;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -19,6 +20,8 @@ public partial class MainWindow : Window
     private readonly PaseWorkflow _paseWorkflow;
     private readonly ResolucionWorkflow _resolucionWorkflow;
 
+    private ResultadoBusquedaWindow? _resultadoBusquedaWindow;
+
     public MainWindow(BusquedaService busquedaService, PaseWorkflow paseWorkflow, RecepcionService recepcionService, ResolucionWorkflow resolucionWorkflow)
     {
         InitializeComponent();
@@ -37,16 +40,24 @@ public partial class MainWindow : Window
         {
             var result = await _busquedaService.SearchAsync(nroExpediente);
 
-            if(result == null)
+            if (result == null)
             {
                 MessageBox.Show("Expediente no encontrado.");
                 return;
             }
 
-            //var resultWindow = new ResultadoBusquedaWindow(result);
-            //resultWindow.Show();
+            if (_resultadoBusquedaWindow == null)
+            {
+                _resultadoBusquedaWindow = new ResultadoBusquedaWindow(result);
+                _resultadoBusquedaWindow.Closed += (s, args) => _resultadoBusquedaWindow = null;
+                _resultadoBusquedaWindow.Show();
+            }
+            else
+            {
+                _resultadoBusquedaWindow.UpdateResultado(result);
+            }
         }
-        catch(ArgumentException ex)
+        catch (ArgumentException ex)
         {
             MessageBox.Show(ex.Message);
         }
@@ -70,6 +81,10 @@ public partial class MainWindow : Window
                 break;
             case Key.F4:
                 MainTabControl.SelectedIndex = 3;
+                e.Handled = true;
+                break;
+            case Key.Enter:
+                BuscarButton_Click(sender, e);
                 e.Handled = true;
                 break;
         }

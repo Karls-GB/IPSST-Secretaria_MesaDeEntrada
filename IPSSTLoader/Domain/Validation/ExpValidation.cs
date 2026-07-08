@@ -30,6 +30,8 @@ public class ExpValidation
 
         switch (context)
         {
+            case ExpValidationContext.Busqueda:
+                break;
 
             case ExpValidationContext.Pase:
                 if (exp.Pase is null)
