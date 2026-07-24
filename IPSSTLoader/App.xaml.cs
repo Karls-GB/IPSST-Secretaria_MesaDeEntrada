@@ -1,4 +1,6 @@
-﻿using IPSSTLoader.Application.Services;
+﻿using IPSST.Application.Configuration;
+using IPSST.Application.Services;
+using IPSSTLoader.Application.Services;
 using IPSSTLoader.Application.Workflows;
 using IPSSTLoader.Domain.Interface;
 using IPSSTLoader.Domain.Validation;
@@ -71,11 +73,15 @@ namespace IPSSTLoader
 
             Log.Information("Usuario {Username} logueado exitosamente", loginWindowUsuario);
 
+            var oficinaCacheService = ServiceProvider.GetRequiredService<OficinaCacheService>();
+            await oficinaCacheService.InitializeAsync();
+            Log.Information("Oficinas cargadas: {Cantidad}", oficinaCacheService.Oficinas.Count);
+
             var mainWindow = ServiceProvider.GetRequiredService<MainWindow>();
             this.MainWindow = mainWindow;
             this.ShutdownMode = ShutdownMode.OnMainWindowClose;
             mainWindow.Show();
-            
+
         }
 
         private void ConfigurarLogging()
@@ -125,6 +131,10 @@ namespace IPSSTLoader
             bool headless = configuration.GetValue<bool>("PlaywrightSettings:Headless");
             string baseUrl = configuration.GetValue<string>("PlaywrightSettings:BaseUrl")!;
 
+            var paseDefaults = configuration.GetSection("PaseDefaults").Get<Dictionary<string, PaseDefaultConfig>>()
+                ?? new Dictionary<string, PaseDefaultConfig>();
+            services.AddSingleton(paseDefaults);
+
             services.AddLogging(builder =>
             {
                 builder.ClearProviders();
@@ -150,6 +160,7 @@ namespace IPSSTLoader
             services.AddScoped<RecepcionService>();
             services.AddScoped<PaseWorkflow>();
             services.AddScoped<ResolucionWorkflow>();
+            services.AddSingleton<OficinaCacheService>();
 
             //UI
             services.AddSingleton<MainWindow>();

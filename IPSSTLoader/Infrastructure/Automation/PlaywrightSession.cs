@@ -39,6 +39,8 @@ public class PlaywrightSession : IAsyncDisposable
         });
         _page = await _browser.NewPageAsync();
 
+        _page.Dialog += async(_, dialog) => await dialog.AcceptAsync();
+
         _keepAliveTimer = new Timer(async _ => await KeepAliveTickAsync(), null, _keepAliveInterval, _keepAliveInterval);
     }
 

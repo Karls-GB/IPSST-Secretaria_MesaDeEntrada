@@ -167,7 +167,15 @@ public class PlaywrightBusqueda : IAutomationBusqueda
                 break;
             }
 
-            await page.ClickAsync("#W0050SIGUIENTE");
+            observaciones.Add(new ObservacionItem
+            {
+                FechaHora = "",
+                Descripcion = "...",
+                Usuario = "",
+                Oficina = ""
+            });
+
+            await page.ClickAsync("#W0050ULTIMO");
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
             pagina++;
         }
