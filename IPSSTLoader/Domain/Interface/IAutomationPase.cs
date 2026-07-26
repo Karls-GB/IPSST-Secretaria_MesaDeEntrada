@@ -8,6 +8,7 @@ namespace IPSSTLoader.Domain.Interface;
 
 public interface IAutomationPase
 {
-    Task<bool> SubmitAsync(Expediente expediente);
+    Task<PasePreparation?> PrepararPaseAsync(string nroExpediente);
+    Task<bool> ConfirmarPaseAsync(string oficinaDestino, int foliosTotal, string observaciones);
     Task<List<OficinaOption>> GetOficinasDestinoAsync();
 }

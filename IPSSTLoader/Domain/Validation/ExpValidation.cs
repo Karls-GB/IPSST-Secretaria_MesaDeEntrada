@@ -10,7 +10,7 @@ namespace IPSSTLoader.Domain.Validation;
 
 public class ExpValidation
 {
-    private static readonly Regex ExpRegex = new(@"^(43(0[1-9]|[1-4]\d|50)|1)-\d{1,6}-\d{4}$");
+    private static readonly Regex ExpRegex = new(@"^(43(0[1-9]|[1-4]\d|50)|1)-\d{1,6}-\d{4}(-[a-zA-Z])?$");
 
     public ValidationResult Validate(Expediente exp, ExpValidationContext context)
     {

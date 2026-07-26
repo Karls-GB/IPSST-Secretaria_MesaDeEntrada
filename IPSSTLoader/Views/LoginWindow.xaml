@@ -7,7 +7,9 @@
         mc:Ignorable="d"
         Title="Iniciar Sesion" Height="220" Width="350"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="NoResize">
+        ResizeMode="NoResize"
+        Loaded="LoginWindow_Loaded"
+        PreviewKeyDown="Window_PreviewKeyDown">
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>

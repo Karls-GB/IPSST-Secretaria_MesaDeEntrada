@@ -2,7 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Confirmar Pase" Height="320" Width="420"
-        WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
+        PreviewKeyDown="Window_PreviewKeyDown">
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -29,7 +30,7 @@
             <TextBlock x:Name="NroExpedienteText" Grid.Row="0" Grid.Column="1" Margin="0,4,0,4"/>
 
             <TextBlock Text="Causante:" FontWeight="Bold" Grid.Row="1" Grid.Column="0" Margin="0,4,10,4"/>
-            <TextBlock x:Name="CausanteText" Grid.Row="1" Grid.Column="1" Margin="0,4,0,4" TextWrapping="Wrap"/>
+            <TextBlock x:Name="CausanteText" Grid.Row="1" Grid.Column="1" Margin="0,4,0,4" TextWrapping="Wrap" FontWeight="Bold" FontSize="16"/>
 
             <TextBlock Text="Oficina:" FontWeight="Bold" Grid.Row="2" Grid.Column="0" Margin="0,4,10,4"/>
             <TextBlock x:Name="OficinaText" Grid.Row="2" Grid.Column="1" Margin="0,4,0,4" TextWrapping="Wrap"/>

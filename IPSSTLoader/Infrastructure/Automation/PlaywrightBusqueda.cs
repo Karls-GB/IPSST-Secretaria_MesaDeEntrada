@@ -14,8 +14,8 @@ public class PlaywrightBusqueda : IAutomationBusqueda
     private readonly PlaywrightSession _session;
     private readonly ILogger<PlaywrightBusqueda> _logger;
 
-    private string SearchUrl => $"{_session.BaseUrl}/expedientes/hviewbuscarexpte.aspx?Expedientes";
-    private string PaseUrl => $"{_session.BaseUrl}/expedientes/hviewexppases.aspx?Pases";
+    private string SearchUrl => $"{_session.BaseUrl}/expedientes/hviewbuscarexpte.{_session.ExtentionUrl}?Expedientes";
+    private string PaseUrl => $"{_session.BaseUrl}/expedientes/hviewexppases.{_session.ExtentionUrl}?Pases";
 
     public PlaywrightBusqueda(PlaywrightSession session, ILogger<PlaywrightBusqueda> logger)
     {

@@ -34,4 +34,16 @@ public partial class ConfirmarPaseWindow : Window
     {
         DialogResult = false;
     }
+
+    private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            Confirmar_Click(this, new RoutedEventArgs());
+        }
+        else if (e.Key == Key.Escape)
+        {
+            Cancelar_Click(this, new RoutedEventArgs());
+        }
+    }
 }

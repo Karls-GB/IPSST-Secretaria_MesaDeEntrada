@@ -7,7 +7,8 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="720" Width="1280"
         PreviewKeyDown="Window_PreviewKeyDown"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Loaded="MainWindow_Loaded">
 
     <Grid>
 
@@ -33,9 +34,9 @@
 
                     <TextBlock Text="Historial de busquedas:" FontWeight="Bold" Grid.Row="1" Margin="934,1,0,19"/>
 
-                    <ListBox x:Name="HistorialListBox" MaxHeight="250" HorizontalAlignment="Left" Width="300"
+                    <ListBox x:Name="HistorialListBox" MaxHeight="520" HorizontalAlignment="Left" Width="300"
                                 MouseDoubleClick="HistorialListBox_MouseDoubleClick"
-                                ToolTip="Doble click para volver a buscar" Margin="934,0,0,14" Grid.RowSpan="2"/>
+                                ToolTip="Doble click para volver a buscar" Margin="934,30,0,19" Grid.Row="1"/>
 
                 </Grid>
             </TabItem>
@@ -58,34 +59,52 @@
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="0,0,0,10">
-                        <TextBlock Text="Oficina Destino:" Width="120"/>
-                        <ComboBox x:Name="OficinaComboBox" Width="350" IsEditable="True" IsTextSearchEnabled="False"
-                      DisplayMemberPath="Nombre"
-                      TextBoxBase.TextChanged="OficinaComboBox_TextChanged"
-                      SelectionChanged="OficinaComboBox_SelectionChanged"/>
-                        <TextBlock x:Name="PaseCausanteText" VerticalAlignment="Center" Width="300" TextWrapping="Wrap"/>
-                        <TextBlock x:Name="PaseFoliosActualesText" VerticalAlignment="Center"//>
+                        <TextBlock Text="Oficina Destino:" VerticalAlignment="Center" Width="120"/>
+                        <Grid Width="350">
+                            <TextBox x:Name="OficinaTextBox" TextChanged="OficinaTextBox_TextChanged"
+                                PreviewKeyDown="OficinaTextBox_PreviewKeyDown" PreviewGotKeyboardFocus="OficinaTextBox_PreviewGotKeyboardFocus"
+                                GotMouseCapture="OficinaTextBox_GotMouseCapture"/>
 
-                        <StackPanel Orientation="Horizontal" Grid.Row="3" Margin="0,0,0,10">
-                            <TextBlock Text="Folios Nuevos:" Width="110"/>
-                            <TextBox x:Name="FoliosNuevosBox" Width="80" TextChanged="FoliosNuevosBox_TextChanged"/>
-                            <TextBlock Text="Folios Total:" VerticalAlignment="Center" Width="120" Margin="20,0,0,0"/>
-                            <TextBox x:Name="FoliosTotalBox" Width="80" TextChanged="FoliosTotalBox_TextChanged"/>
-                        </StackPanel>
+                            <Popup x:Name="OficinaPopup" PlacementTarget="{Binding ElementName=OficinaTextBox}"
+                                Placement="Bottom" Width="350" StaysOpen="False">
+                                <Border Background="White" BorderBrush="Gray" BorderThickness="1">
+                                    <ListBox x:Name="OficinaSuggestionsListBox" MaxHeight="200"
+                         DisplayMemberPath="Nombre"
+                         PreviewMouseLeftButtonUp="OficinaSuggestionsListBox_PreviewMouseLeftButtonUp"/>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Grid.Row="3" Margin="0,0,0,10">
+                        <TextBlock Text="Folios Nuevos:" Width="110"/>
+                        <TextBox x:Name="FoliosNuevosBox" Width="80" TextChanged="FoliosNuevosBox_TextChanged" PreviewKeyDown="FoliosNuevosBox_PreviewKeyDown"/>
+                        <TextBlock Text="Folios Total:" VerticalAlignment="Center" Width="72" Margin="20,0,0,0"/>
+                        <TextBox x:Name="FoliosTotalBox" Width="80" TextChanged="FoliosTotalBox_TextChanged"/>
+                    </StackPanel>
 
                     <TextBlock Text="Observaciones:" Grid.Row="4" Margin="0,0,0,5"/>
                     <TextBox x:Name="ObservacionesPaseBox" Grid.Row="5" Height="80" TextWrapping="Wrap"
-                 AcceptsReturn="True" Margin="0,0,0,15"/>
+                 AcceptsReturn="False" Margin="0,0,0,15"/>
 
                     <Button x:Name="ConfirmarPaseButton" Content="Confirmar" Grid.Row="6" Width="120" Padding="10,5"
                 HorizontalAlignment="Left" Click="ConfirmarPaseButton_Click"/>
                 </Grid>
             </TabItem>
-            
+
             <TabItem Header="Resolucion"/>
             <TabItem Header="Recepcion"/>
 
         </TabControl>
+
+        <Border x:Name="ToastBorder" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+            Margin="0,0,20,20" Padding="15,10" CornerRadius="6" Visibility="Collapsed"
+            MaxWidth="350">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.4"/>
+            </Border.Effect>
+            <TextBlock x:Name="ToastText" Foreground="White" TextWrapping="Wrap" FontSize="13"/>
+        </Border>
 
     </Grid>
 </Window>

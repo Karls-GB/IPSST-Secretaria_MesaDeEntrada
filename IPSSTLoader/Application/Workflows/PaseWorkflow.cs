@@ -1,4 +1,5 @@
-﻿using IPSSTLoader.Domain.Entities;
+﻿using IPSST.Domain.Entities;
+using IPSSTLoader.Domain.Entities;
 using IPSSTLoader.Domain.Enums;
 using IPSSTLoader.Domain.Interface;
 using IPSSTLoader.Domain.Validation;
@@ -22,6 +23,22 @@ public class PaseWorkflow
         _automationPase = automationPase;
         _uploadJobRepository = uploadJobRepository;
         _expValidation = expValidation;
+    }
+
+    public async Task<PasePreparation?> PrepararAsync(string nroExpediente)
+    {
+        return await _automationPase.PrepararPaseAsync(nroExpediente);
+    }
+
+    public void ValidateExp(string nroExpediente)
+    {
+        var tempExpediente = new Expediente { NroExpediente = nroExpediente };
+        var validationResult = _expValidation.Validate(tempExpediente, ExpValidationContext.Busqueda);
+
+        if (!validationResult.IsValid)
+        {
+            throw new ArgumentException(string.Join(", ", validationResult.Errors));
+        }
     }
 
     public async Task ExecuteAsync(Expediente expediente, bool isRetry = false, int maxRetries = 3, UploadJob? existingJob = null)
@@ -81,7 +98,10 @@ public class PaseWorkflow
 
             try
             {
-                var success = await _automationPase.SubmitAsync(expediente);
+                var success = await _automationPase.ConfirmarPaseAsync(
+                    expediente.Pase!.OficinaDestino,
+                    expediente.Pase.Folios,
+                    expediente.Pase.Observaciones ?? string.Empty);
 
                 if (success)
                 {

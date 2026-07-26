@@ -130,6 +130,7 @@ namespace IPSSTLoader
             var configuration = new ConfigurationBuilder().SetBasePath(AppContext.BaseDirectory).AddJsonFile("appsettings.json", optional: false).Build();
             bool headless = configuration.GetValue<bool>("PlaywrightSettings:Headless");
             string baseUrl = configuration.GetValue<string>("PlaywrightSettings:BaseUrl")!;
+            string extentionUrl = configuration.GetValue<string>("PlaywrightSettings:ExtentionUrl")!;
 
             var paseDefaults = configuration.GetSection("PaseDefaults").Get<Dictionary<string, PaseDefaultConfig>>()
                 ?? new Dictionary<string, PaseDefaultConfig>();
@@ -146,7 +147,7 @@ namespace IPSSTLoader
 
             //Infraestructura
             services.AddSingleton<PlaywrightSession>(sp =>
-                new PlaywrightSession(headless, baseUrl, sp.GetRequiredService<ILogger<PlaywrightSession>>()));
+                new PlaywrightSession(headless, baseUrl, sp.GetRequiredService<ILogger<PlaywrightSession>>(), extentionUrl));
 
             services.AddDbContext<AppDbContext>(options => options.UseSqlite("Data Source = ipsstloader.db"));
             services.AddScoped<IUploadJobRepository, UploadJobRepository>();

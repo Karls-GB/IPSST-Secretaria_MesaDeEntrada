@@ -18,16 +18,18 @@ public class PlaywrightSession : IAsyncDisposable
 
     private readonly bool _headless;
     private readonly TimeSpan _keepAliveInterval = TimeSpan.FromMinutes(15);
-    private string _loginUrl => $"{BaseUrl}/expedientes/hexplogin.aspx";
+    private string _loginUrl => $"{BaseUrl}/expedientes/hexplogin.{ExtentionUrl}";
     private readonly ILogger<PlaywrightSession> _logger;
 
     public string BaseUrl { get; }
+    public string ExtentionUrl { get; }
 
-    public PlaywrightSession(bool headless, string baseUrl, ILogger<PlaywrightSession> logger)
+    public PlaywrightSession(bool headless, string baseUrl, ILogger<PlaywrightSession> logger, string extentionUrl)
     {
         _headless = headless;
         _logger = logger;
         BaseUrl = baseUrl;
+        ExtentionUrl = extentionUrl;
     }
 
     public async Task InitializeAsync()

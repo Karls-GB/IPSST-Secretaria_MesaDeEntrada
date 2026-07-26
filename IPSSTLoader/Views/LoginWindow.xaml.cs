@@ -30,4 +30,17 @@ public partial class LoginWindow : Window
         LoginConfirmed = true;
         Close();
     }
+
+    private void LoginWindow_Loaded(object sender, RoutedEventArgs e)
+    {
+        UsernameBox.Focus();
+    }
+
+    private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            LoginButton_Click(this, new RoutedEventArgs());
+        }
+    }
 }

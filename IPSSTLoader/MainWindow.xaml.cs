@@ -32,6 +32,7 @@ public partial class MainWindow : Window
 
     private int _currentFoliosPase;
     private bool _actualizandoFoliosDesdePrograma;
+    private OficinaOption? _oficinaSeleccionada;
 
     public MainWindow(
         BusquedaService busquedaService, 
@@ -51,7 +52,6 @@ public partial class MainWindow : Window
         _paseDefaults = paseDefaults;
 
         HistorialListBox.ItemsSource = _historial;
-        OficinaComboBox.ItemsSource = _oficinaCacheService.Oficinas;
     }
 
     //Busqueda
@@ -128,24 +128,103 @@ public partial class MainWindow : Window
 
     //Pase
 
-    private void OficinaComboBox_TextChanged(object sender, TextChangedEventArgs e)
+    private void OficinaTextBox_TextChanged(object sender, TextChangedEventArgs e)
     {
-        var texto = OficinaComboBox.Text;
+        // Si el usuario sigue escribiendo, la seleccion anterior ya no es valida hasta que elija de nuevo
+        _oficinaSeleccionada = null;
 
-        var filtradas = string.IsNullOrWhiteSpace(texto)
-            ? _oficinaCacheService.Oficinas
-            : _oficinaCacheService.Oficinas.Where(o => o.Nombre.Contains(texto, StringComparison.OrdinalIgnoreCase)).ToList();
+        var texto = OficinaTextBox.Text;
 
-        OficinaComboBox.ItemsSource = filtradas;
-        OficinaComboBox.IsDropDownOpen = filtradas.Count > 0 && !string.IsNullOrWhiteSpace(texto);
+        if (string.IsNullOrWhiteSpace(texto))
+        {
+            OficinaPopup.IsOpen = false;
+            return;
+        }
+
+        var filtradas = _oficinaCacheService.Oficinas
+            .Where(o => o.Nombre.Contains(texto, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        OficinaSuggestionsListBox.ItemsSource = filtradas;
+        OficinaPopup.IsOpen = filtradas.Count > 0;
+
+        if (filtradas.Count > 0)
+        {
+            OficinaSuggestionsListBox.SelectedIndex = 0;
+        }
     }
 
-    private void OficinaComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void OficinaTextBox_PreviewGotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {    
+         OficinaTextBox.SelectAll();
+    }
+
+    private void OficinaTextBox_GotMouseCapture(object sender, MouseEventArgs e)
     {
-        if (OficinaComboBox.SelectedItem is OficinaOption oficina &&
-        _paseDefaults.TryGetValue(oficina.Nombre, out var config))
+        OficinaTextBox.SelectAll();
+    }
+
+    private void OficinaTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (!OficinaPopup.IsOpen) return;
+
+        switch (e.Key)
         {
-            // Solo completa si el usuario todavia no escribio nada ahi, para no pisar su entrada
+            case Key.Down:
+                if (OficinaSuggestionsListBox.SelectedIndex < OficinaSuggestionsListBox.Items.Count - 1)
+                    OficinaSuggestionsListBox.SelectedIndex++;
+                e.Handled = true;
+                break;
+
+            case Key.Up:
+                if (OficinaSuggestionsListBox.SelectedIndex > 0)
+                    OficinaSuggestionsListBox.SelectedIndex--;
+                e.Handled = true;
+                break;
+
+            case Key.Enter:
+                ConfirmarSeleccionOficina();
+                e.Handled = true;
+                break;
+
+            case Key.Escape or Key.Tab:
+                OficinaPopup.IsOpen = false;
+                if(e.Key == Key.Tab)
+                {
+                    // Mueve el foco al siguiente control
+                    var request = new TraversalRequest(FocusNavigationDirection.Next);
+                    OficinaTextBox.MoveFocus(request);
+                }
+                e.Handled = true;
+                break;
+        }
+    }
+
+    private void OficinaSuggestionsListBox_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        ConfirmarSeleccionOficina();
+    }
+
+    private void ConfirmarSeleccionOficina()
+    {
+        if (OficinaSuggestionsListBox.SelectedItem is OficinaOption oficina)
+        {
+            _oficinaSeleccionada = oficina;
+            OficinaTextBox.TextChanged -= OficinaTextBox_TextChanged; // evita reabrir el popup al setear el texto
+            OficinaTextBox.Text = oficina.Nombre;
+            OficinaTextBox.CaretIndex = OficinaTextBox.Text.Length;
+            OficinaTextBox.TextChanged += OficinaTextBox_TextChanged;
+
+            OficinaPopup.IsOpen = false;
+
+            AplicarDefaultsDeOficina(oficina);
+        }
+    }
+
+    private void AplicarDefaultsDeOficina(OficinaOption oficina)
+    {
+        if (_paseDefaults.TryGetValue(oficina.Nombre, out var config))
+        {
             if (string.IsNullOrWhiteSpace(FoliosNuevosBox.Text) && string.IsNullOrWhiteSpace(FoliosTotalBox.Text))
             {
                 FoliosNuevosBox.Text = config.FoliosNuevos.ToString();
@@ -165,12 +244,8 @@ public partial class MainWindow : Window
         if (!string.IsNullOrWhiteSpace(FoliosTotalBox.Text))
         {
             FoliosNuevosBox.Text = string.Empty;
-            FoliosNuevosBox.IsEnabled = false;
         }
-        else
-        {
-            FoliosNuevosBox.IsEnabled = true;
-        }
+
         _actualizandoFoliosDesdePrograma = false;
     }
 
@@ -181,12 +256,8 @@ public partial class MainWindow : Window
         if (!string.IsNullOrWhiteSpace(FoliosNuevosBox.Text))
         {
             FoliosTotalBox.Text = string.Empty;
-            FoliosTotalBox.IsEnabled = false;
         }
-        else
-        {
-            FoliosTotalBox.IsEnabled = true;
-        }
+
         _actualizandoFoliosDesdePrograma = false;
     }
 
@@ -214,7 +285,6 @@ public partial class MainWindow : Window
     {
         // Validar antes de hacer cualquier busqueda, para fallar rapido si falta algo
         if (string.IsNullOrWhiteSpace(PaseNroExpedienteBox.Text) ||
-            OficinaComboBox.SelectedItem is not OficinaOption oficinaSeleccionada ||
             (string.IsNullOrWhiteSpace(FoliosTotalBox.Text) && string.IsNullOrWhiteSpace(FoliosNuevosBox.Text)) ||
             string.IsNullOrWhiteSpace(ObservacionesPaseBox.Text))
         {
@@ -222,9 +292,47 @@ public partial class MainWindow : Window
             return;
         }
 
+        if(_oficinaSeleccionada is not OficinaOption oficinaSeleccionada)
+        {
+            MessageBox.Show("Seleccione una Oficina Valida");
+            return;
+        }
+
+        PaseNroExpedienteBox.Focus();
+
+        try
+        {
+            _paseWorkflow.ValidateExp(PaseNroExpedienteBox.Text);
+        }
+        catch (ArgumentException ex)
+        {
+            MessageBox.Show(ex.Message);
+            return;
+        }
+
+        ConfirmarPaseButton.IsEnabled = false;
+
+        PasePreparation? result;
+        try
+        {
+            result = await _paseWorkflow.PrepararAsync(PaseNroExpedienteBox.Text);
+        }
+        finally
+        {
+
+        }
+
+        if (result == null)
+        {
+            MessageBox.Show("Expediente no encontrado en la cola de Pases.");
+            return;
+        }
+
+        int totalFolios;
+
         if (!string.IsNullOrWhiteSpace(FoliosTotalBox.Text))
         {
-            if (!int.TryParse(FoliosTotalBox.Text, out var totalFolios))
+            if (!int.TryParse(FoliosTotalBox.Text, out totalFolios))
             {
                 MessageBox.Show("Folios Total debe ser un numero valido.");
                 return;
@@ -237,19 +345,23 @@ public partial class MainWindow : Window
                 MessageBox.Show("Folios Nuevos debe ser un numero valido.");
                 return;
             }
+            totalFolios = result.FolioActual + nuevos;
         }
 
         var confirmWindow = new ConfirmarPaseWindow(
-        PaseNroExpedienteBox.Text,
-        result.Causante,
-        oficinaSeleccionada.Nombre,
-        totalFolios,
-        ObservacionesPaseBox.Text);
+            PaseNroExpedienteBox.Text,
+            result.Causante,
+            oficinaSeleccionada.Nombre,
+            totalFolios,
+            ObservacionesPaseBox.Text);
 
         if (confirmWindow.ShowDialog() != true)
         {
+            ConfirmarPaseButton.IsEnabled = true;
             return;
         }
+
+        ConfirmarPaseButton.IsEnabled = true;
 
         var expediente = new Expediente
         {
@@ -262,28 +374,34 @@ public partial class MainWindow : Window
             }
         };
 
-        ConfirmarPaseButton.IsEnabled = false;
+        LimpiarFormularioPase();
+
         try
         {
             await _paseWorkflow.ExecuteAsync(expediente);
-            MessageBox.Show("Pase realizado con exito.");
-            LimpiarFormularioPase();
+            await MostrarToastAsync($"Pase del Expediente {expediente.NroExpediente} realizado con exito.", esError: false);
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error al realizar el Pase: {ex.Message}");
-        }
-        finally
-        {
-            ConfirmarPaseButton.IsEnabled = true;
+            await MostrarToastAsync($"Error al realizar el Pase del Expediente {expediente.NroExpediente}: {ex.Message}", esError: true);
         }
     }
 
-    private void SetPaseCargandoState(bool cargando)
+    private async Task MostrarToastAsync(string mensaje, bool esError)
     {
-        PaseProgressBar.Visibility = cargando ? Visibility.Visible : Visibility.Collapsed;
-        PaseCargandoText.Visibility = cargando ? Visibility.Visible : Visibility.Collapsed;
-        ConfirmarPaseButton.IsEnabled = !cargando;
+        ToastBorder.Background = esError ? new SolidColorBrush(Color.FromRgb(0xC0, 0x39, 0x2B))
+                                          : new SolidColorBrush(Color.FromRgb(0x2E, 0x8B, 0x57));
+        ToastText.Text = mensaje;
+        ToastBorder.Visibility = Visibility.Visible;
+
+        await Task.Delay(5000);
+
+        ToastBorder.Visibility = Visibility.Collapsed;
+    }
+
+    private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+    {
+        NroExpedienteBox.Focus();
     }
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -292,10 +410,12 @@ public partial class MainWindow : Window
         {
             case Key.F1:
                 MainTabControl.SelectedIndex = 0;
+                NroExpedienteBox.Focus();
                 e.Handled = true;
                 break;
             case Key.F2:
                 MainTabControl.SelectedIndex = 1;
+                PaseNroExpedienteBox.Focus();
                 e.Handled = true;
                 break;
             case Key.F3:
@@ -307,8 +427,35 @@ public partial class MainWindow : Window
                 e.Handled = true;
                 break;
             case Key.Enter:
-                BuscarButton_Click(sender, e);
-                e.Handled = true;
+                if(!OficinaPopup.IsOpen){
+                    HandleEnterShortcut();
+                    e.Handled = true;
+                }
+                break;
+        }
+    }
+
+    private void HandleEnterShortcut()
+    {
+        switch (MainTabControl.SelectedIndex)
+        {
+            case 0: // Busqueda
+                if (BuscarButton.IsEnabled)
+                {
+                    BuscarButton_Click(this, new RoutedEventArgs());
+                }
+                break;
+            case 1: // Pase
+                if (ConfirmarPaseButton.IsEnabled)
+                {
+                    ConfirmarPaseButton_Click(this, new RoutedEventArgs());
+                }
+                break;
+            case 2: // Recepcion
+                // Implementar si es necesario
+                break;
+            case 3: // Resolucion
+                // Implementar si es necesario
                 break;
         }
     }
@@ -326,4 +473,5 @@ public partial class MainWindow : Window
         public override string ToString() =>
             string.IsNullOrWhiteSpace(Causante) ? NroExpediente : $"{NroExpediente} - {Causante}";
     }
+
 }

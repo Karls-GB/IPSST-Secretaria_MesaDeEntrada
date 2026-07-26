@@ -16,7 +16,7 @@ public class PlaywrightPase : IAutomationPase
     private readonly PlaywrightSession _session;
     private readonly ILogger<PlaywrightPase> _logger;
 
-    private string PaseURL => $"{_session.BaseUrl}/expedientes/hviewexppases.aspx?Pases";
+    private string PaseURL => $"{_session.BaseUrl}/expedientes/hviewexppases.{_session.ExtentionUrl}?Pases";
 
     public PlaywrightPase(PlaywrightSession session, ILogger<PlaywrightPase> logger)
     {
@@ -65,44 +65,58 @@ public class PlaywrightPase : IAutomationPase
         });
     }
 
-    public async Task<bool> SubmitAsync(Expediente expediente)
+    public async Task<PasePreparation?> PrepararPaseAsync(string nroExpediente)
     {
-        return await _session.RunAsync(async page =>
+        return await _session.RunAsync<PasePreparation?>(async page =>
         {
             await page.GotoAsync(PaseURL);
-            await page.FillAsync("input[name='W0009_TEXTOBUSQUEDA']", expediente.NroExpediente);
+            await page.FillAsync("input[name='W0009_TEXTOBUSQUEDA']", nroExpediente);
             await page.ClickAsync("input[name='W0009BUTTON2']");
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
             var rowCountRaw = await page.InputValueAsync("input[name='W0009nRC_Gridexppase']");
-            if(!int.TryParse(rowCountRaw, out var rowCount) || rowCount == 0)
+            if (!int.TryParse(rowCountRaw, out var rowCount) || rowCount == 0)
             {
-                _logger.LogWarning("Expediente {NroExpediente} no encontrado en la cola de Pases", expediente.NroExpediente);
-                return false;
+                _logger.LogWarning("Expediente {NroExpediente} no encontrado en la cola de Pases", nroExpediente);
+                return null;
             }
 
             await page.ClickAsync("#W0009_PASE_0001");
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-            await page.SelectOptionAsync("select[name='W0026_OFIIDDESTINO']", new SelectOptionValue { Label = expediente.Pase!.OficinaDestino });
+            var causante = await page.InputValueAsync("input[name='EXPCAUSANTE']");
 
-            await page.FillAsync("input[name='W0026_EXPPASESFOLIOS']", expediente.Pase.Folios.ToString());
+            var folioActualRaw = await page.InputValueAsync("input[name='W0026_EXPPASESFOLIOS']");
+            int.TryParse(folioActualRaw?.Trim(), out var folioActual);
 
-            await page.FillAsync("textarea[name='W0026_EXPPASESOBSERVACIONES']", expediente.Pase.Observaciones ?? string.Empty);
+            return new PasePreparation
+            {
+                Causante = causante,
+                FolioActual = folioActual
+            };
+        });
+    }
 
+    public async Task<bool> ConfirmarPaseAsync(string oficinaDestino, int foliosTotal, string observaciones)
+    {
+        return await _session.RunAsync(async page =>
+        {
+            await page.SelectOptionAsync("select[name='W0026_OFIIDDESTINO']", new SelectOptionValue { Label = oficinaDestino });
+            await page.FillAsync("input[name='W0026_EXPPASESFOLIOS']", foliosTotal.ToString());
+            await page.FillAsync("textarea[name='W0026_EXPPASESOBSERVACIONES']", observaciones ?? string.Empty);
+            
             await page.ClickAsync("input[name='W0026BTN_PASE']");
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
-            var paseExitoso = page.Url.Contains("hviewexppases.aspx", StringComparison.OrdinalIgnoreCase);
-
+            
+            var paseExitoso = page.Url.Contains($"hviewexppases.{_session.ExtentionUrl}", StringComparison.OrdinalIgnoreCase);
             if (paseExitoso)
             {
-                _logger.LogInformation("Pase completado para {NroExpediente}", expediente.NroExpediente);
+                _logger.LogInformation("Pase confirmado para {OficinaDestino}", oficinaDestino);
                 return true;
             }
-
+           
             var errorMessage = await page.InputValueAsync("input[name='_RAZONNOPUEDE']");
-            _logger.LogError("Pase rechazado para {NroExpediente}: {Error}", expediente.NroExpediente, errorMessage);
+            _logger.LogError("Pase rechazado para {OficinaDestino}: {Error}", oficinaDestino, errorMessage);
             return false;
         });
     }
