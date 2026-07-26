@@ -33,6 +33,7 @@ public partial class MainWindow : Window
     private int _currentFoliosPase;
     private bool _actualizandoFoliosDesdePrograma;
     private OficinaOption? _oficinaSeleccionada;
+    private const string DefaultConfigKey = "__default__";
 
     public MainWindow(
         BusquedaService busquedaService, 
@@ -223,18 +224,18 @@ public partial class MainWindow : Window
 
     private void AplicarDefaultsDeOficina(OficinaOption oficina)
     {
-        if (_paseDefaults.TryGetValue(oficina.Nombre, out var config))
+        if (!_paseDefaults.TryGetValue(oficina.Nombre, out var config))
         {
-            if (string.IsNullOrWhiteSpace(FoliosNuevosBox.Text) && string.IsNullOrWhiteSpace(FoliosTotalBox.Text))
-            {
-                FoliosNuevosBox.Text = config.FoliosNuevos.ToString();
-            }
-
-            if (string.IsNullOrWhiteSpace(ObservacionesPaseBox.Text))
-            {
-                ObservacionesPaseBox.Text = config.Observaciones;
-            }
+            _paseDefaults.TryGetValue(DefaultConfigKey, out config);
         }
+
+        if (config == null)
+        {
+            return; // Ni la oficina especifica ni el default general estan configurados
+        }
+
+        FoliosNuevosBox.Text = config.FoliosNuevos.ToString();
+        ObservacionesPaseBox.Text = config.Observaciones;
     }
 
     private void FoliosTotalBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -244,6 +245,18 @@ public partial class MainWindow : Window
         if (!string.IsNullOrWhiteSpace(FoliosTotalBox.Text))
         {
             FoliosNuevosBox.Text = string.Empty;
+        }
+
+        _actualizandoFoliosDesdePrograma = false;
+    }
+
+    private void FoliosNuevosBox_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+    {
+        if (_actualizandoFoliosDesdePrograma) return;
+        _actualizandoFoliosDesdePrograma = true;
+        if (!string.IsNullOrWhiteSpace(FoliosNuevosBox.Text))
+        {
+            FoliosTotalBox.Text = string.Empty;
         }
 
         _actualizandoFoliosDesdePrograma = false;
@@ -259,19 +272,6 @@ public partial class MainWindow : Window
         }
 
         _actualizandoFoliosDesdePrograma = false;
-    }
-
-    private void FoliosNuevosBox_PreviewKeyDown(object sender, KeyEventArgs e)
-    {
-        if (e.Key != Key.Up && e.Key != Key.Down) return;
-
-        int valorActual = int.TryParse(FoliosNuevosBox.Text, out var v) ? v : 0;
-        valorActual += e.Key == Key.Up ? 1 : -1;
-        if (valorActual < 0) valorActual = 0;
-
-        FoliosNuevosBox.Text = valorActual.ToString();
-        FoliosNuevosBox.CaretIndex = FoliosNuevosBox.Text.Length;
-        e.Handled = true;
     }
 
     private void LimpiarFormularioPase()
@@ -473,5 +473,4 @@ public partial class MainWindow : Window
         public override string ToString() =>
             string.IsNullOrWhiteSpace(Causante) ? NroExpediente : $"{NroExpediente} - {Causante}";
     }
-
 }
