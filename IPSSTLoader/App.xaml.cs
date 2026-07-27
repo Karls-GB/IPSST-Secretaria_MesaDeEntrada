@@ -136,6 +136,10 @@ namespace IPSSTLoader
                 ?? new Dictionary<string, PaseDefaultConfig>();
             services.AddSingleton(paseDefaults);
 
+            var resolucionDefaults = configuration.GetSection("ResolucionDefaults").Get<Dictionary<string, ResolucionDefaultConfig>>()
+                ?? new Dictionary<string, ResolucionDefaultConfig>();
+            services.AddSingleton(resolucionDefaults);
+
             services.AddLogging(builder =>
             {
                 builder.ClearProviders();

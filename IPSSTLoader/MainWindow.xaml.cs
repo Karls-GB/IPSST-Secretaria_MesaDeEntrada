@@ -26,6 +26,7 @@ public partial class MainWindow : Window
     private readonly ResolucionWorkflow _resolucionWorkflow;
     private readonly OficinaCacheService _oficinaCacheService;
     private readonly Dictionary<string, PaseDefaultConfig> _paseDefaults;
+    private readonly Dictionary<string, ResolucionDefaultConfig> _resolucionDefaults;
 
     private ResultadoBusquedaWindow? _resultadoBusquedaWindow;
     private readonly ObservableCollection<HistorialItem> _historial = new();
@@ -41,7 +42,8 @@ public partial class MainWindow : Window
         RecepcionService recepcionService, 
         ResolucionWorkflow resolucionWorkflow,
         OficinaCacheService oficinaCacheService,
-        Dictionary<string, PaseDefaultConfig> paseDefaults)
+        Dictionary<string, PaseDefaultConfig> paseDefaults,
+        Dictionary<string, ResolucionDefaultConfig> resolucionDefaults)
     {
         InitializeComponent();
 
@@ -51,6 +53,7 @@ public partial class MainWindow : Window
         _resolucionWorkflow = resolucionWorkflow;
         _oficinaCacheService = oficinaCacheService;
         _paseDefaults = paseDefaults;
+        _resolucionDefaults = resolucionDefaults;
 
         HistorialListBox.ItemsSource = _historial;
     }
@@ -127,6 +130,15 @@ public partial class MainWindow : Window
         _historial.Insert(0, new HistorialItem { NroExpediente = nroExpediente, Causante = causante });
     }
 
+    private class HistorialItem
+    {
+        public string NroExpediente { get; set; } = string.Empty;
+        public string? Causante { get; set; }
+
+        public override string ToString() =>
+            string.IsNullOrWhiteSpace(Causante) ? NroExpediente : $"{NroExpediente} - {Causante}";
+    }
+
     //Pase
 
     private void OficinaTextBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -157,7 +169,7 @@ public partial class MainWindow : Window
 
     private void OficinaTextBox_PreviewGotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
     {    
-         OficinaTextBox.SelectAll();
+        OficinaTextBox.SelectAll();
     }
 
     private void OficinaTextBox_GotMouseCapture(object sender, MouseEventArgs e)
@@ -262,23 +274,9 @@ public partial class MainWindow : Window
         _actualizandoFoliosDesdePrograma = false;
     }
 
-    private void FoliosNuevosBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (_actualizandoFoliosDesdePrograma) return;
-        _actualizandoFoliosDesdePrograma = true;
-        if (!string.IsNullOrWhiteSpace(FoliosNuevosBox.Text))
-        {
-            FoliosTotalBox.Text = string.Empty;
-        }
-
-        _actualizandoFoliosDesdePrograma = false;
-    }
-
     private void LimpiarFormularioPase()
     {
         PaseNroExpedienteBox.Clear();
-        FoliosTotalBox.IsEnabled = true;
-        FoliosNuevosBox.IsEnabled = true;
     }
 
     private async void ConfirmarPaseButton_Click(object sender, RoutedEventArgs e)
@@ -335,6 +333,11 @@ public partial class MainWindow : Window
             if (!int.TryParse(FoliosTotalBox.Text, out totalFolios))
             {
                 MessageBox.Show("Folios Total debe ser un numero valido.");
+                return;
+            }
+            if (totalFolios < result.FolioActual)
+            {
+                MessageBox.Show($"Folios Total debe ser mayor o igual a los que muestra el sistema: {result.FolioActual} Folios");
                 return;
             }
         }
@@ -399,9 +402,279 @@ public partial class MainWindow : Window
         ToastBorder.Visibility = Visibility.Collapsed;
     }
 
+    //Resolucion
+
+    private void ResolucionOficinaTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        // Si el usuario sigue escribiendo, la seleccion anterior ya no es valida hasta que elija de nuevo
+        _oficinaSeleccionada = null;
+
+        var texto = ResolucionOficinaTextBox.Text;
+
+        if (string.IsNullOrWhiteSpace(texto))
+        {
+            ResolucionOficinaPopup.IsOpen = false;
+            return;
+        }
+
+        var filtradas = _oficinaCacheService.Oficinas
+            .Where(o => o.Nombre.Contains(texto, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        ResolucionOficinaSuggestionsListBox.ItemsSource = filtradas;
+        ResolucionOficinaPopup.IsOpen = filtradas.Count > 0;
+
+        if (filtradas.Count > 0)
+        {
+            ResolucionOficinaSuggestionsListBox.SelectedIndex = 0;
+        }
+    }
+
+    private void ResolucionOficinaTextBox_PreviewGotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        ResolucionOficinaTextBox.SelectAll();
+    }
+
+    private void ResolucionOficinaTextBox_GotMouseCapture(object sender, MouseEventArgs e)
+    {
+        ResolucionOficinaTextBox.SelectAll();
+    }
+
+    private void ResolucionOficinaTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (!ResolucionOficinaPopup.IsOpen) return;
+
+        switch (e.Key)
+        {
+            case Key.Down:
+                if (ResolucionOficinaSuggestionsListBox.SelectedIndex < ResolucionOficinaSuggestionsListBox.Items.Count - 1)
+                    ResolucionOficinaSuggestionsListBox.SelectedIndex++;
+                e.Handled = true;
+                break;
+
+            case Key.Up:
+                if (ResolucionOficinaSuggestionsListBox.SelectedIndex > 0)
+                    ResolucionOficinaSuggestionsListBox.SelectedIndex--;
+                e.Handled = true;
+                break;
+
+            case Key.Enter:
+                ResolucionConfirmarSeleccionOficina();
+                e.Handled = true;
+                break;
+
+            case Key.Escape or Key.Tab:
+                ResolucionOficinaPopup.IsOpen = false;
+                if (e.Key == Key.Tab)
+                {
+                    // Mueve el foco al siguiente control
+                    var request = new TraversalRequest(FocusNavigationDirection.Next);
+                    ResolucionOficinaTextBox.MoveFocus(request);
+                }
+                e.Handled = true;
+                break;
+        }
+    }
+
+    private void ResolucionOficinaSuggestionsListBox_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        ResolucionConfirmarSeleccionOficina();
+    }
+
+    private void ResolucionConfirmarSeleccionOficina()
+    {
+        if (ResolucionOficinaSuggestionsListBox.SelectedItem is OficinaOption oficina)
+        {
+            _oficinaSeleccionada = oficina;
+            ResolucionOficinaTextBox.TextChanged -= ResolucionOficinaTextBox_TextChanged; // evita reabrir el popup al setear el texto
+            ResolucionOficinaTextBox.Text = oficina.Nombre;
+            ResolucionOficinaTextBox.CaretIndex = ResolucionOficinaTextBox.Text.Length;
+            ResolucionOficinaTextBox.TextChanged += ResolucionOficinaTextBox_TextChanged;
+
+            ResolucionOficinaPopup.IsOpen = false;
+
+            ResolucionAplicarDefaultsDeOficina(oficina);
+        }
+    }
+
+    private void ResolucionAplicarDefaultsDeOficina(OficinaOption oficina)
+    {
+        if (!_resolucionDefaults.TryGetValue(oficina.Nombre, out var config))
+        {
+            _resolucionDefaults.TryGetValue(DefaultConfigKey, out config);
+        }
+
+        if (config == null)
+        {
+            return; // Ni la oficina especifica ni el default general estan configurados
+        }
+
+        ResolucionFoliosNuevosBox.Text = config.FoliosNuevos.ToString();
+    }
+
+    private void ResolucionFoliosTotalBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (_actualizandoFoliosDesdePrograma) return;
+        _actualizandoFoliosDesdePrograma = true;
+        if (!string.IsNullOrWhiteSpace(ResolucionFoliosTotalBox.Text))
+        {
+            ResolucionFoliosNuevosBox.Text = string.Empty;
+        }
+
+        _actualizandoFoliosDesdePrograma = false;
+    }
+
+    private void ResolucionFoliosNuevosBox_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+    {
+        if (_actualizandoFoliosDesdePrograma) return;
+        _actualizandoFoliosDesdePrograma = true;
+        if (!string.IsNullOrWhiteSpace(ResolucionFoliosNuevosBox.Text))
+        {
+            ResolucionFoliosTotalBox.Text = string.Empty;
+        }
+
+        _actualizandoFoliosDesdePrograma = false;
+    }
+    private void FechaResolucionBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Up && e.Key != Key.Down) return;
+
+        var fechaActual = FechaResolucionBox.Value ?? DateTime.Today;
+        fechaActual = fechaActual.AddDays(e.Key == Key.Up ? 1 : -1);
+
+        FechaResolucionBox.Value = fechaActual;
+        e.Handled = true;
+    }
+
+    private void ResolucionLimpiarFormularioPase()
+    {
+        ResolucionNroExpedienteBox.Clear();
+    }
+
+    private async void ConfirmarResolucionButton_Click(object sender, RoutedEventArgs e)
+    {
+        // Validar antes de hacer cualquier busqueda, para fallar rapido si falta algo
+        if (string.IsNullOrWhiteSpace(ResolucionNroExpedienteBox.Text) ||
+            (string.IsNullOrWhiteSpace(ResolucionFoliosTotalBox.Text) && string.IsNullOrWhiteSpace(ResolucionFoliosNuevosBox.Text)) ||
+            string.IsNullOrWhiteSpace(ObservacionesResolucionBox.Text))
+        {
+            MessageBox.Show("Todos los campos son requeridos.");
+            return;
+        }
+
+        if (_oficinaSeleccionada is not OficinaOption oficinaSeleccionada)
+        {
+            MessageBox.Show("Seleccione una Oficina Valida");
+            return;
+        }
+
+        ResolucionNroExpedienteBox.Focus();
+
+        try
+        {
+            _paseWorkflow.ValidateExp(ResolucionNroExpedienteBox.Text);
+        }
+        catch (ArgumentException ex)
+        {
+            MessageBox.Show(ex.Message);
+            return;
+        }
+
+        ConfirmarResolucionButton.IsEnabled = false;
+
+        //PasePreparation? result;
+        //try
+        //{
+        //    result = await _paseWorkflow.PrepararAsync(PaseNroExpedienteBox.Text);
+        //}
+        //finally
+        //{
+
+        //}
+
+        //if (result == null)
+        //{
+        //    MessageBox.Show("Expediente no encontrado en la cola de Pases.");
+        //    return;
+        //}
+
+        //int totalFolios;
+
+        //if (!string.IsNullOrWhiteSpace(FoliosTotalBox.Text))
+        //{
+        //    if (!int.TryParse(FoliosTotalBox.Text, out totalFolios))
+        //    {
+        //        MessageBox.Show("Folios Total debe ser un numero valido.");
+        //        return;
+        //    }
+        //}
+        //else
+        //{
+        //    if (!int.TryParse(FoliosNuevosBox.Text, out var nuevos))
+        //    {
+        //        MessageBox.Show("Folios Nuevos debe ser un numero valido.");
+        //        return;
+        //    }
+        //    totalFolios = result.FolioActual + nuevos;
+        //}
+
+        //var confirmWindow = new ConfirmarPaseWindow(
+        //    PaseNroExpedienteBox.Text,
+        //    result.Causante,
+        //    oficinaSeleccionada.Nombre,
+        //    totalFolios,
+        //    ObservacionesPaseBox.Text);
+
+        //if (confirmWindow.ShowDialog() != true)
+        //{
+        //    ConfirmarPaseButton.IsEnabled = true;
+        //    return;
+        //}
+
+        //ConfirmarPaseButton.IsEnabled = true;
+
+        //var expediente = new Expediente
+        //{
+        //    NroExpediente = PaseNroExpedienteBox.Text,
+        //    Pase = new PaseData
+        //    {
+        //        OficinaDestino = oficinaSeleccionada.Nombre,
+        //        Folios = totalFolios,
+        //        Observaciones = ObservacionesPaseBox.Text
+        //    }
+        //};
+
+        ResolucionLimpiarFormularioPase();
+
+        //try
+        //{
+        //    await _paseWorkflow.ExecuteAsync(expediente);
+        //    await MostrarToastAsync($"Pase del Expediente {expediente.NroExpediente} realizado con exito.", esError: false);
+        //}
+        //catch (Exception ex)
+        //{
+        //    await MostrarToastAsync($"Error al realizar el Pase del Expediente {expediente.NroExpediente}: {ex.Message}", esError: true);
+        //}
+    }
+
+    private async Task ResolucionMostrarToastAsync(string mensaje, bool esError)
+    {
+        ToastBorder.Background = esError ? new SolidColorBrush(Color.FromRgb(0xC0, 0x39, 0x2B))
+                                          : new SolidColorBrush(Color.FromRgb(0x2E, 0x8B, 0x57));
+        ToastText.Text = mensaje;
+        ToastBorder.Visibility = Visibility.Visible;
+
+        await Task.Delay(5000);
+
+        ToastBorder.Visibility = Visibility.Collapsed;
+    }
+
+    //Globales
+
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
         NroExpedienteBox.Focus();
+        FechaResolucionBox.Value = DateTime.Today;
     }
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -427,7 +700,7 @@ public partial class MainWindow : Window
                 e.Handled = true;
                 break;
             case Key.Enter:
-                if(!OficinaPopup.IsOpen){
+                if(!OficinaPopup.IsOpen && !ResolucionOficinaPopup.IsOpen){
                     HandleEnterShortcut();
                     e.Handled = true;
                 }
@@ -452,7 +725,10 @@ public partial class MainWindow : Window
                 }
                 break;
             case 2: // Recepcion
-                // Implementar si es necesario
+                if (ConfirmarResolucionButton.IsEnabled)
+                {
+                    ConfirmarResolucionButton_Click(this, new RoutedEventArgs());
+                }
                 break;
             case 3: // Resolucion
                 // Implementar si es necesario
@@ -463,14 +739,5 @@ public partial class MainWindow : Window
     private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
 
-    }
-
-    private class HistorialItem
-    {
-        public string NroExpediente { get; set; } = string.Empty;
-        public string? Causante { get; set; }
-
-        public override string ToString() =>
-            string.IsNullOrWhiteSpace(Causante) ? NroExpediente : $"{NroExpediente} - {Causante}";
     }
 }

@@ -7,6 +7,6 @@ namespace IPSSTLoader.Domain.Entities;
 public class ResolucionData
 {
     public string NroResolucion { get; set; } = string.Empty;
-    public DateOnly? FechaResolucion { get; set; }
+    public DateTime FechaResolucion { get; set; }
     public string? Observaciones { get; set; }
 }

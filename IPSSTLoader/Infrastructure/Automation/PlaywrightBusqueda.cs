@@ -61,7 +61,7 @@ public class PlaywrightBusqueda : IAutomationBusqueda
             var motivoRaw = await page.InputValueAsync("input[name='EXPAREAAREA']");
             var asuntoRaw = await page.InputValueAsync("input[name='EXPASUNTO']");
             var causanteRaw = await page.InputValueAsync("input[name='EXPCAUSANTE']");
-            var estadoRaw = await page.InputValueAsync("input[name='EXPESTADODESCRIPCION']");
+            var estadoRaw = $"{await page.InputValueAsync("input[name='EXPESTADODESCRIPCION']")} {await page.InputValueAsync("input[name='W0050_OFICINADESTINONOMBRECOMPLETO']")}";
             var oficinaRaw = await page.InputValueAsync("input[name='W0050_EXPOFINOMBRE']");
             var sucursalRaw = await page.InputValueAsync("input[name='W0050_EXPSUCURSALNOMBRE']");
             var fechaPaseRaw = await page.InputValueAsync("input[name='W0050_EXPPASESFECHAHORA']");

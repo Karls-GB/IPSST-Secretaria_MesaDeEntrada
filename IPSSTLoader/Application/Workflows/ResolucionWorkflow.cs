@@ -80,7 +80,10 @@ public class ResolucionWorkflow
 
             try
             {
-                resolucionSuccess = await _automationResolucion.SubmitAsync(expediente);
+                resolucionSuccess = await _automationResolucion.ConfirmarResAsync(
+                                                    expediente.Resolucion!.NroResolucion,
+                                                    expediente.Resolucion.FechaResolucion,
+                                                    expediente.Resolucion.Observaciones ?? string.Empty);
 
                 if (!resolucionSuccess)
                 {
