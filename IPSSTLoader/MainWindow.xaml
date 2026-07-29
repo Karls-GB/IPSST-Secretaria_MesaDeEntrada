@@ -7,6 +7,7 @@
         xmlns:local="clr-namespace:IPSSTLoader"
         mc:Ignorable="d"
         Title="MainWindow" Height="720" Width="1280"
+        MinHeight="600" MinWidth="900"
         PreviewKeyDown="Window_PreviewKeyDown"
         WindowStartupLocation="CenterScreen"
         Loaded="MainWindow_Loaded">
@@ -21,8 +22,12 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="300"/>
+                    </Grid.ColumnDefinitions>
 
-                    <StackPanel Orientation="Horizontal" Grid.Row="0">
+                    <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0">
                         <TextBlock Text="Nro. Expediente:" VerticalAlignment="Center" Margin="0,0,10,0"/>
                         <TextBox x:Name="NroExpedienteBox" Width="250" VerticalAlignment="Center"/>
                         <Button x:Name="BuscarButton" Content="Buscar" Margin="10,0,0,0"
@@ -33,12 +38,12 @@
                                 Margin="8,0,0,0" Foreground="Gray" Visibility="Collapsed"/>
                     </StackPanel>
 
-                    <TextBlock Text="Historial de busquedas:" FontWeight="Bold" Grid.Row="1" Margin="934,1,0,19"/>
-
-                    <ListBox x:Name="HistorialListBox" MaxHeight="530" HorizontalAlignment="Left" Width="290"
-                                MouseDoubleClick="HistorialListBox_MouseDoubleClick"
-                                ToolTip="Doble click para volver a buscar" Margin="934,30,0,19" Grid.Row="1"/>
-
+                    <StackPanel Grid.Row="1" Grid.Column="1" Margin="20,10,0,0">
+                        <TextBlock Text="Historial de busquedas:" FontWeight="Bold" Margin="0,0,0,10"/>
+                        <ListBox x:Name="HistorialListBox" MaxHeight="530" HorizontalAlignment="Stretch"
+                                    MouseDoubleClick="HistorialListBox_MouseDoubleClick"
+                                    ToolTip="Doble click para volver a buscar" Height="100"/>
+                    </StackPanel>
                 </Grid>
             </TabItem>
 
@@ -61,14 +66,13 @@
 
                     <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="0,0,0,10">
                         <TextBlock Text="Oficina Destino:" VerticalAlignment="Center" Width="120"/>
-                        <Grid Width="350">
+                        <Grid Width="525">
                             <TextBox x:Name="OficinaTextBox" TextChanged="OficinaTextBox_TextChanged"
                                     PreviewKeyDown="OficinaTextBox_PreviewKeyDown" PreviewGotKeyboardFocus="OficinaTextBox_PreviewGotKeyboardFocus"
-                                    GotMouseCapture="OficinaTextBox_GotMouseCapture" Margin="0,0,-175
-                                     ,0"/>
+                                    GotMouseCapture="OficinaTextBox_GotMouseCapture"/>
 
                             <Popup x:Name="OficinaPopup" PlacementTarget="{Binding ElementName=OficinaTextBox}"
-                                    Placement="Bottom" Width="350" StaysOpen="False">
+                                    Placement="Bottom" Width="525" StaysOpen="False">
                                 <Border Background="White" BorderBrush="Gray" BorderThickness="1">
                                     <ListBox x:Name="OficinaSuggestionsListBox" MaxHeight="200"
                                             DisplayMemberPath="Nombre"
@@ -116,7 +120,7 @@
                         <TextBox x:Name="ResolucionNroExpedienteBox" Width="200" VerticalAlignment="Center"/>
                     </StackPanel>
 
-                    <Border Grid.Row="0" Height="1" Background="Black" Margin="0,2" VerticalAlignment="Bottom"/>
+                    <Border Grid.Row="0" Height="1" Background="DarkGray" Margin="0,2" VerticalAlignment="Bottom"/>
 
                     <TextBlock Text="Resolucion:" Grid.Row="1" Margin="0,0,0,5" FontWeight="Bold"/>
 
@@ -138,19 +142,19 @@
                             AcceptsReturn="False" Margin="0,0,0,15" Text="CON RESOLUCION FIRMADA"/>
 
 
-                    <Border Grid.Row="5" Height="1" Background="Black" Margin="0,2" VerticalAlignment="Bottom"/>
+                    <Border Grid.Row="5" Height="1" Background="DarkGray" Margin="0,2" VerticalAlignment="Bottom"/>
                     
                     <TextBlock Text="Pase:" Grid.Row="6" Margin="0,0,0,5" FontWeight="Bold"/>
 
                     <StackPanel Orientation="Horizontal" Grid.Row="7" Margin="0,0,0,10">
                         <TextBlock Text="Oficina Destino:" VerticalAlignment="Center" Width="120"/>
-                        <Grid Width="350">
+                        <Grid Width="525">
                             <TextBox x:Name="ResolucionOficinaTextBox" TextChanged="ResolucionOficinaTextBox_TextChanged"
                                     PreviewKeyDown="ResolucionOficinaTextBox_PreviewKeyDown" PreviewGotKeyboardFocus="ResolucionOficinaTextBox_PreviewGotKeyboardFocus"
-                                    GotMouseCapture="ResolucionOficinaTextBox_GotMouseCapture" Margin="0,0,-175,0"/>
+                                    GotMouseCapture="ResolucionOficinaTextBox_GotMouseCapture"/>
 
                             <Popup x:Name="ResolucionOficinaPopup" PlacementTarget="{Binding ElementName=ResolucionOficinaTextBox}"
-                                    Placement="Bottom" Width="350" StaysOpen="False">
+                                    Placement="Bottom" Width="525" StaysOpen="False">
                                 <Border Background="White" BorderBrush="Gray" BorderThickness="1">
                                     <ListBox x:Name="ResolucionOficinaSuggestionsListBox" MaxHeight="200"
                                             DisplayMemberPath="Nombre"

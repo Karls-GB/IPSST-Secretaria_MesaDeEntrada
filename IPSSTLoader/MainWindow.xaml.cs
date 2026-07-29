@@ -1,6 +1,7 @@
 ﻿using IPSST.Application.Configuration;
 using IPSST.Application.Services;
 using IPSST.Domain.Entities;
+using IPSST.Views;
 using IPSSTLoader.Application.Services;
 using IPSSTLoader.Application.Workflows;
 using IPSSTLoader.Domain.Entities;
@@ -31,9 +32,9 @@ public partial class MainWindow : Window
     private ResultadoBusquedaWindow? _resultadoBusquedaWindow;
     private readonly ObservableCollection<HistorialItem> _historial = new();
 
-    private int _currentFoliosPase;
     private bool _actualizandoFoliosDesdePrograma;
-    private OficinaOption? _oficinaSeleccionada;
+    private OficinaOption? _oficinaSeleccionadaPase;
+    private OficinaOption? _oficinaSeleccionadaResolucion;
     private const string DefaultConfigKey = "__default__";
 
     public MainWindow(
@@ -144,7 +145,7 @@ public partial class MainWindow : Window
     private void OficinaTextBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         // Si el usuario sigue escribiendo, la seleccion anterior ya no es valida hasta que elija de nuevo
-        _oficinaSeleccionada = null;
+        _oficinaSeleccionadaPase = null;
 
         var texto = OficinaTextBox.Text;
 
@@ -222,7 +223,7 @@ public partial class MainWindow : Window
     {
         if (OficinaSuggestionsListBox.SelectedItem is OficinaOption oficina)
         {
-            _oficinaSeleccionada = oficina;
+            _oficinaSeleccionadaPase = oficina;
             OficinaTextBox.TextChanged -= OficinaTextBox_TextChanged; // evita reabrir el popup al setear el texto
             OficinaTextBox.Text = oficina.Nombre;
             OficinaTextBox.CaretIndex = OficinaTextBox.Text.Length;
@@ -290,7 +291,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        if(_oficinaSeleccionada is not OficinaOption oficinaSeleccionada)
+        if(_oficinaSeleccionadaPase is not OficinaOption oficinaSeleccionada)
         {
             MessageBox.Show("Seleccione una Oficina Valida");
             return;
@@ -323,6 +324,7 @@ public partial class MainWindow : Window
         if (result == null)
         {
             MessageBox.Show("Expediente no encontrado en la cola de Pases.");
+            ConfirmarPaseButton.IsEnabled = true;
             return;
         }
 
@@ -333,11 +335,13 @@ public partial class MainWindow : Window
             if (!int.TryParse(FoliosTotalBox.Text, out totalFolios))
             {
                 MessageBox.Show("Folios Total debe ser un numero valido.");
+                ConfirmarPaseButton.IsEnabled = true;
                 return;
             }
             if (totalFolios < result.FolioActual)
             {
                 MessageBox.Show($"Folios Total debe ser mayor o igual a los que muestra el sistema: {result.FolioActual} Folios");
+                ConfirmarPaseButton.IsEnabled = true;
                 return;
             }
         }
@@ -346,6 +350,7 @@ public partial class MainWindow : Window
             if (!int.TryParse(FoliosNuevosBox.Text, out var nuevos))
             {
                 MessageBox.Show("Folios Nuevos debe ser un numero valido.");
+                ConfirmarPaseButton.IsEnabled = true;
                 return;
             }
             totalFolios = result.FolioActual + nuevos;
@@ -369,6 +374,7 @@ public partial class MainWindow : Window
         var expediente = new Expediente
         {
             NroExpediente = PaseNroExpedienteBox.Text,
+            ExpedienteIdWeb = result.ExpId,
             Pase = new PaseData
             {
                 OficinaDestino = oficinaSeleccionada.Nombre,
@@ -381,7 +387,7 @@ public partial class MainWindow : Window
 
         try
         {
-            await _paseWorkflow.ExecuteAsync(expediente);
+            await _paseWorkflow.ExecuteAsync(expediente, result.ExpId ?? string.Empty);
             await MostrarToastAsync($"Pase del Expediente {expediente.NroExpediente} realizado con exito.", esError: false);
         }
         catch (Exception ex)
@@ -407,7 +413,7 @@ public partial class MainWindow : Window
     private void ResolucionOficinaTextBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         // Si el usuario sigue escribiendo, la seleccion anterior ya no es valida hasta que elija de nuevo
-        _oficinaSeleccionada = null;
+        _oficinaSeleccionadaResolucion = null;
 
         var texto = ResolucionOficinaTextBox.Text;
 
@@ -485,7 +491,7 @@ public partial class MainWindow : Window
     {
         if (ResolucionOficinaSuggestionsListBox.SelectedItem is OficinaOption oficina)
         {
-            _oficinaSeleccionada = oficina;
+            _oficinaSeleccionadaResolucion = oficina;
             ResolucionOficinaTextBox.TextChanged -= ResolucionOficinaTextBox_TextChanged; // evita reabrir el popup al setear el texto
             ResolucionOficinaTextBox.Text = oficina.Nombre;
             ResolucionOficinaTextBox.CaretIndex = ResolucionOficinaTextBox.Text.Length;
@@ -549,6 +555,7 @@ public partial class MainWindow : Window
     private void ResolucionLimpiarFormularioPase()
     {
         ResolucionNroExpedienteBox.Clear();
+        NroResolucionBox.Clear();
     }
 
     private async void ConfirmarResolucionButton_Click(object sender, RoutedEventArgs e)
@@ -562,7 +569,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (_oficinaSeleccionada is not OficinaOption oficinaSeleccionada)
+        if (_oficinaSeleccionadaResolucion is not OficinaOption oficinaSeleccionada)
         {
             MessageBox.Show("Seleccione una Oficina Valida");
             return;
@@ -582,79 +589,108 @@ public partial class MainWindow : Window
 
         ConfirmarResolucionButton.IsEnabled = false;
 
-        //PasePreparation? result;
-        //try
-        //{
-        //    result = await _paseWorkflow.PrepararAsync(PaseNroExpedienteBox.Text);
-        //}
-        //finally
-        //{
+        ResPreparation? result;
+        try
+        {
+            result = await _resolucionWorkflow.PrepararResolucionAsync(ResolucionNroExpedienteBox.Text);
+        }
+        finally
+        {
 
-        //}
+        }
 
-        //if (result == null)
-        //{
-        //    MessageBox.Show("Expediente no encontrado en la cola de Pases.");
-        //    return;
-        //}
+        if (result == null)
+        {
+            MessageBox.Show("Expediente no encontrado en la cola de Pases.");
+            ConfirmarResolucionButton.IsEnabled = true;
+            return;
+        }
 
-        //int totalFolios;
+        int totalFolios;
 
-        //if (!string.IsNullOrWhiteSpace(FoliosTotalBox.Text))
-        //{
-        //    if (!int.TryParse(FoliosTotalBox.Text, out totalFolios))
-        //    {
-        //        MessageBox.Show("Folios Total debe ser un numero valido.");
-        //        return;
-        //    }
-        //}
-        //else
-        //{
-        //    if (!int.TryParse(FoliosNuevosBox.Text, out var nuevos))
-        //    {
-        //        MessageBox.Show("Folios Nuevos debe ser un numero valido.");
-        //        return;
-        //    }
-        //    totalFolios = result.FolioActual + nuevos;
-        //}
+        if (!string.IsNullOrWhiteSpace(ResolucionFoliosTotalBox.Text))
+        {
+            if (!int.TryParse(ResolucionFoliosTotalBox.Text, out totalFolios))
+            {
+                MessageBox.Show("Folios Total debe ser un numero valido.");
+                ConfirmarResolucionButton.IsEnabled = true;
+                return;
+            }
+        }
+        else
+        {
+            if (!int.TryParse(ResolucionFoliosNuevosBox.Text, out var nuevos))
+            {
+                MessageBox.Show("Folios Nuevos debe ser un numero valido.");
+                ConfirmarResolucionButton.IsEnabled = true;
+                return;
+            }
+            totalFolios = result.FolioActual + nuevos;
+        }
 
-        //var confirmWindow = new ConfirmarPaseWindow(
-        //    PaseNroExpedienteBox.Text,
-        //    result.Causante,
-        //    oficinaSeleccionada.Nombre,
-        //    totalFolios,
-        //    ObservacionesPaseBox.Text);
+        for (int i = 0; i < result.ResolucionesAnteriores.Count; i++)
+        {
+            if (result.ResolucionesAnteriores[i]!.Contains($"{NroResolucionBox.Text}/", StringComparison.OrdinalIgnoreCase))
+            {
+                MessageBox.Show("Numero de Resolucion ya fue cargado al expediente");
+                ConfirmarResolucionButton.IsEnabled = true;
+                return;
+            }
+        }
 
-        //if (confirmWindow.ShowDialog() != true)
-        //{
-        //    ConfirmarPaseButton.IsEnabled = true;
-        //    return;
-        //}
+        if (FechaResolucionBox.Value is null)
+        {
+            MessageBox.Show("Debe seleccionar una fecha de resolucion.");
+            ConfirmarResolucionButton.IsEnabled = true;
+            return;
+        }
 
-        //ConfirmarPaseButton.IsEnabled = true;
+        var confirmResWindow = new ConfirmarResWindow(
+            ResolucionNroExpedienteBox.Text,
+            result.Causante,
+            NroResolucionBox.Text,
+            FechaResolucionBox.Text,
+            ObservacionesResolucionBox.Text,
+            oficinaSeleccionada.Nombre,
+            totalFolios,
+            ObservacionesPase2Box.Text);
 
-        //var expediente = new Expediente
-        //{
-        //    NroExpediente = PaseNroExpedienteBox.Text,
-        //    Pase = new PaseData
-        //    {
-        //        OficinaDestino = oficinaSeleccionada.Nombre,
-        //        Folios = totalFolios,
-        //        Observaciones = ObservacionesPaseBox.Text
-        //    }
-        //};
+        if (confirmResWindow.ShowDialog() != true)
+        {
+            ConfirmarResolucionButton.IsEnabled = true;
+            return;
+        }
+
+        ConfirmarResolucionButton.IsEnabled = true;
+
+        var expediente = new Expediente
+        {
+            NroExpediente = ResolucionNroExpedienteBox.Text,
+            Pase = new PaseData
+            {
+                OficinaDestino = oficinaSeleccionada.Nombre,
+                Folios = totalFolios,
+                Observaciones = ObservacionesPase2Box.Text
+            },
+            Resolucion = new ResolucionData
+            {
+                NroResolucion = NroResolucionBox.Text,
+                FechaResolucion = FechaResolucionBox.Value.Value,
+                Observaciones = ObservacionesResolucionBox.Text
+            }
+        };
 
         ResolucionLimpiarFormularioPase();
 
-        //try
-        //{
-        //    await _paseWorkflow.ExecuteAsync(expediente);
-        //    await MostrarToastAsync($"Pase del Expediente {expediente.NroExpediente} realizado con exito.", esError: false);
-        //}
-        //catch (Exception ex)
-        //{
-        //    await MostrarToastAsync($"Error al realizar el Pase del Expediente {expediente.NroExpediente}: {ex.Message}", esError: true);
-        //}
+        try
+        {
+            await _resolucionWorkflow.ExecuteAsync(expediente, result.ExpId);
+            await ResolucionMostrarToastAsync($"Resolucion del Expediente {expediente.NroExpediente} cargada con exito.", esError: false);
+        }
+        catch (Exception ex)
+        {
+            await ResolucionMostrarToastAsync($"Error al cargar la resolucion del Expediente {expediente.NroExpediente}: {ex.Message}", esError: true);
+        }
     }
 
     private async Task ResolucionMostrarToastAsync(string mensaje, bool esError)
@@ -724,13 +760,13 @@ public partial class MainWindow : Window
                     ConfirmarPaseButton_Click(this, new RoutedEventArgs());
                 }
                 break;
-            case 2: // Recepcion
+            case 2: // Resolucion
                 if (ConfirmarResolucionButton.IsEnabled)
                 {
                     ConfirmarResolucionButton_Click(this, new RoutedEventArgs());
                 }
                 break;
-            case 3: // Resolucion
+            case 3: // Recepcion
                 // Implementar si es necesario
                 break;
         }

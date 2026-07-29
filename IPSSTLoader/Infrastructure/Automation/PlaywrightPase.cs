@@ -7,6 +7,7 @@ using Microsoft.Playwright;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace IPSSTLoader.Infrastructure.Automation;
@@ -17,6 +18,7 @@ public class PlaywrightPase : IAutomationPase
     private readonly ILogger<PlaywrightPase> _logger;
 
     private string PaseURL => $"{_session.BaseUrl}/expedientes/hviewexppases.{_session.ExtentionUrl}?Pases";
+    private string PaseFormURL => $"{_session.BaseUrl}/expedientes/hviewexpedientespasesindividuales.{_session.ExtentionUrl}";
 
     public PlaywrightPase(PlaywrightSession session, ILogger<PlaywrightPase> logger)
     {
@@ -84,6 +86,7 @@ public class PlaywrightPase : IAutomationPase
             await page.ClickAsync("#W0009_PASE_0001");
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
+            var expId = await page.InputValueAsync("input[name='W0026A916ExpID_PARM']");
             var causante = await page.InputValueAsync("input[name='EXPCAUSANTE']");
 
             var folioActualRaw = await page.InputValueAsync("input[name='W0026_EXPPASESFOLIOS']");
@@ -92,15 +95,22 @@ public class PlaywrightPase : IAutomationPase
             return new PasePreparation
             {
                 Causante = causante,
-                FolioActual = folioActual
+                FolioActual = folioActual,
+                ExpId = expId
             };
         });
     }
 
-    public async Task<bool> ConfirmarPaseAsync(string oficinaDestino, int foliosTotal, string observaciones)
+    public async Task<bool> ConfirmarPaseAsync(string oficinaDestino, int foliosTotal, string observaciones, string expId)
     {
         return await _session.RunAsync(async page =>
         {
+            if(!page.Url.Contains("hviewexppases", StringComparison.OrdinalIgnoreCase))
+            {
+                await page.GotoAsync($"{PaseFormURL}?{expId},ExpedientesPases,0");
+                await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            }
+
             await page.SelectOptionAsync("select[name='W0026_OFIIDDESTINO']", new SelectOptionValue { Label = oficinaDestino });
             await page.FillAsync("input[name='W0026_EXPPASESFOLIOS']", foliosTotal.ToString());
             await page.FillAsync("textarea[name='W0026_EXPPASESOBSERVACIONES']", observaciones ?? string.Empty);

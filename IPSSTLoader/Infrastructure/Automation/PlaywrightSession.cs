@@ -17,7 +17,7 @@ public class PlaywrightSession : IAsyncDisposable
     private string? _homeUrl;
 
     private readonly bool _headless;
-    private readonly TimeSpan _keepAliveInterval = TimeSpan.FromMinutes(15);
+    private readonly TimeSpan _keepAliveInterval = TimeSpan.FromMinutes(10);
     private string _loginUrl => $"{BaseUrl}/expedientes/hexplogin.{ExtentionUrl}";
     private readonly ILogger<PlaywrightSession> _logger;
 
@@ -64,7 +64,7 @@ public class PlaywrightSession : IAsyncDisposable
 
             await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-            bool loggedIn = !_page.Url.Contains("Login");
+            bool loggedIn = !_page.Url.Contains("hexplogin", StringComparison.OrdinalIgnoreCase);
 
             if (loggedIn)
             {

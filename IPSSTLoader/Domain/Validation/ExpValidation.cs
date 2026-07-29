@@ -53,7 +53,7 @@ public class ExpValidation
 
                 if (string.IsNullOrEmpty(exp.Pase.Observaciones))
                 {
-                    result.Errors.Add("Observacion Requerida");
+                    result.Errors.Add("Observacion De Pase Requerida");
                 }
 
                 break;
@@ -70,11 +70,15 @@ public class ExpValidation
                     result.Errors.Add("Numero de Resolucion es Requerido");
                 }
 
-                if (exp.Resolucion.FechaResolucion is null)
+                if (exp.Resolucion.FechaResolucion == default)
                 {
                     result.Errors.Add("Fecha Requerida o es Invalida");
                 }
 
+                if (exp.Resolucion.Observaciones == null)
+                {
+                    result.Errors.Add("Onservacion de Resolucion Requerida");
+                }
                 break;
 
         }

@@ -8,4 +8,5 @@ public class PasePreparation
 {
     public string? Causante { get; set; }
     public int FolioActual { get; set; }
+    public string? ExpId { get; set; }
 }

@@ -1,4 +1,5 @@
-﻿using IPSSTLoader.Domain.Entities;
+﻿using IPSST.Domain.Entities;
+using IPSSTLoader.Domain.Entities;
 using IPSSTLoader.Domain.Enums;
 using IPSSTLoader.Domain.Interface;
 using IPSSTLoader.Domain.Validation;
@@ -28,7 +29,12 @@ public class ResolucionWorkflow
         _expValidation = expValidation;
     }
 
-    public async Task ExecuteAsync(Expediente expediente, bool isRetry = false, int maxRetries = 3)
+    public async Task<ResPreparation?> PrepararResolucionAsync(string nroExpediente)
+    {
+        return await _automationResolucion.PrepararResolucionAsync(nroExpediente);
+    }
+
+    public async Task ExecuteAsync(Expediente expediente, string expId, bool isRetry = false, int maxRetries = 3)
     {
         //Asignar Id si no lo tiene
         if (expediente.Id == default)
@@ -128,6 +134,6 @@ public class ResolucionWorkflow
         await _uploadJobRepository.UpdateAsync(job);
         
         //Ejecutar Pase
-        await _paseWorkflow.ExecuteAsync(expediente, maxRetries: maxRetries, existingJob: job);
+        await _paseWorkflow.ExecuteAsync(expediente, expId, maxRetries: maxRetries, existingJob: job);
     }
 }

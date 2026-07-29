@@ -10,12 +10,7 @@ using System.Text;
 namespace IPSSTLoader.Infrastructure.Automation;
 
 public class PlaywrightResolucion : IAutomationResolucion
-{
-    public Task<bool> SubmitAsync(Expediente expediente)
-    {
-        throw new NotImplementedException("Resolucion Aun no Implementado");
-    }
-    
+{    
     private readonly PlaywrightSession _session;
     private readonly ILogger<PlaywrightResolucion> _logger;
 
@@ -36,7 +31,7 @@ public class PlaywrightResolucion : IAutomationResolucion
             await page.ClickAsync("input[name='BUTTON1']");
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-            var rowCountRaw = await page.InputValueAsync("input[name='GRIDEXP']");
+            var rowCountRaw = await page.InputValueAsync("input[name='nRC_Gridexp']");
             if (!int.TryParse(rowCountRaw, out var rowCount) || rowCount == 0)
             {
                 _logger.LogWarning("Expediente {NroExpediente} no encontrado en la cola de Resoluciones", nroExpediente);
@@ -46,19 +41,36 @@ public class PlaywrightResolucion : IAutomationResolucion
             await page.ClickAsync("#_DISPLAY_0001");
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
+            var expId = await page.InputValueAsync("input[name='W0035AV79ExpID_PARM']");
             var causante = await page.InputValueAsync("input[name='EXPCAUSANTE']");
 
             var folioActualRaw = await page.InputValueAsync("input[name='EXPFOLIO']");
             int.TryParse(folioActualRaw?.Trim(), out var folioActual);
 
             var resoluciones = new List<string?>();
+            int i = 1;
 
-            //Copiar Pagina con resoluciones cargadas
+            while (true)
+            {
+                var suffix = i.ToString("D4");
+                var res = await page.InputValueAsync($"input[name='W0035EXPRESNRORESCOMPLETO_{suffix}']");
+
+                if (!res.Contains($"/{DateTime.Now.Year.ToString("D4")}", StringComparison.OrdinalIgnoreCase))
+                {
+                    break;
+                }
+
+                resoluciones.Add(res);
+                i++;
+            }
+            
 
             return new ResPreparation
             {
                 Causante = causante,
-                FolioActual = folioActual
+                FolioActual = folioActual,
+                ExpId = expId,
+                ResolucionesAnteriores = resoluciones
             };
         });
     }
@@ -71,8 +83,8 @@ public class PlaywrightResolucion : IAutomationResolucion
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
             await page.FillAsync("input[name='W0023_EXPRESNRORES']", nroResolucion);
-            await page.FillAsync("textarea[name='W0023_EXPRESFECHA']", fechaResolucion.ToString("dd/MM/yyyy"));
-            await page.FillAsync("input[name='W0023_EXPRESMOTIVO']", observacionesRes);
+            await page.FillAsync("input[name='W0023_EXPRESFECHA']", fechaResolucion.ToString("dd/MM/yyyy"));
+            await page.FillAsync("textarea[name='W0023_EXPRESMOTIVO']", observacionesRes);
 
             await page.ClickAsync("input[name='W0023BTN_ACEPTAR']");
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle);

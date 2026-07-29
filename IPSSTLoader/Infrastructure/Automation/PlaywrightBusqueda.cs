@@ -129,6 +129,14 @@ public class PlaywrightBusqueda : IAutomationBusqueda
 
         await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
+        var rowCountRaw = await page.InputValueAsync("input[name='W0009nRC_Gridexppase']");
+        int.TryParse(rowCountRaw?.Trim(), out var rawCount);
+
+        if (rawCount == 0)
+        {
+            return null;
+        }
+
         return await page.InputValueAsync("input[name='W0009EXPPASEUSUARIO_0001']");
     }
 

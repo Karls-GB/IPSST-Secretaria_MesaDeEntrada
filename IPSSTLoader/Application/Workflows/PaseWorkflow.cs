@@ -41,7 +41,7 @@ public class PaseWorkflow
         }
     }
 
-    public async Task ExecuteAsync(Expediente expediente, bool isRetry = false, int maxRetries = 3, UploadJob? existingJob = null)
+    public async Task ExecuteAsync(Expediente expediente, string expId, bool isRetry = false, int maxRetries = 3, UploadJob? existingJob = null)
     {
         //Asignar Id si no lo tiene
         if(expediente.Id == default)
@@ -101,7 +101,8 @@ public class PaseWorkflow
                 var success = await _automationPase.ConfirmarPaseAsync(
                     expediente.Pase!.OficinaDestino,
                     expediente.Pase.Folios,
-                    expediente.Pase.Observaciones ?? string.Empty);
+                    expediente.Pase.Observaciones ?? string.Empty,
+                    expId);
 
                 if (success)
                 {
