@@ -26,6 +26,8 @@ public class PlaywrightResolucion : IAutomationResolucion
     {
         return await _session.RunAsync<ResPreparation?>(async page =>
         {
+            _logger.LogDebug("Navegando a Resoluciones para {NroExpediente}", nroExpediente);
+
             await page.GotoAsync(ResURL);
             await page.FillAsync("input[name='_TEXTOBUSQUEDA']", nroExpediente);
             await page.ClickAsync("input[name='BUTTON1']");
@@ -47,13 +49,23 @@ public class PlaywrightResolucion : IAutomationResolucion
             var folioActualRaw = await page.InputValueAsync("input[name='EXPFOLIO']");
             int.TryParse(folioActualRaw?.Trim(), out var folioActual);
 
+            _logger.LogDebug("Expediente {NroExpediente} localizado (ExpId {ExpId}, Folio actual {FolioActual})", nroExpediente, expId, folioActual);
+
             var resoluciones = new List<string?>();
             int i = 1;
 
             while (true)
             {
                 var suffix = i.ToString("D4");
-                var res = await page.InputValueAsync($"input[name='W0035EXPRESNRORESCOMPLETO_{suffix}']");
+                var selector = $"input[name='W0035EXPRESNRORESCOMPLETO_{suffix}']";
+
+                var existe = await page.Locator(selector).CountAsync() > 0;
+                if (!existe)
+                {
+                    break; // No hay mas filas
+                }
+
+                var res = await page.InputValueAsync(selector);
 
                 if (!res.Contains($"/{DateTime.Now.Year.ToString("D4")}", StringComparison.OrdinalIgnoreCase))
                 {
@@ -63,7 +75,8 @@ public class PlaywrightResolucion : IAutomationResolucion
                 resoluciones.Add(res);
                 i++;
             }
-            
+
+            _logger.LogInformation("Preparacion de Resolucion completada para {NroExpediente}: {CantidadAnteriores} resoluciones anteriores encontradas", nroExpediente, resoluciones.Count);
 
             return new ResPreparation
             {
@@ -79,12 +92,16 @@ public class PlaywrightResolucion : IAutomationResolucion
     {
         return await _session.RunAsync(async page =>
         {
+            _logger.LogDebug("Abriendo formulario de carga de Resolucion para {NroResolucion}", nroResolucion);
+
             await page.ClickAsync("input[name='BTN_RESOLUCION']");
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
             await page.FillAsync("input[name='W0023_EXPRESNRORES']", nroResolucion);
             await page.FillAsync("input[name='W0023_EXPRESFECHA']", fechaResolucion.ToString("dd/MM/yyyy"));
             await page.FillAsync("textarea[name='W0023_EXPRESMOTIVO']", observacionesRes);
+
+            _logger.LogDebug("Enviando Resolucion {NroResolucion} con fecha {FechaResolucion}", nroResolucion, fechaResolucion.ToString("dd/MM/yyyy"));
 
             await page.ClickAsync("input[name='W0023BTN_ACEPTAR']");
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle);

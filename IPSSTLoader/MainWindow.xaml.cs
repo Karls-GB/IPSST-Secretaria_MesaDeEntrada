@@ -32,9 +32,12 @@ public partial class MainWindow : Window
     private ResultadoBusquedaWindow? _resultadoBusquedaWindow;
     private readonly ObservableCollection<HistorialItem> _historial = new();
 
+    private List<RecepcionItem> _recepcionEncontrados = new();
+
     private bool _actualizandoFoliosDesdePrograma;
     private OficinaOption? _oficinaSeleccionadaPase;
     private OficinaOption? _oficinaSeleccionadaResolucion;
+    private OficinaOption? _oficinaSeleccionadaRecepcion;
     private const string DefaultConfigKey = "__default__";
 
     public MainWindow(
@@ -705,6 +708,284 @@ public partial class MainWindow : Window
         ToastBorder.Visibility = Visibility.Collapsed;
     }
 
+    //Recepcion
+    private void RecepNroExpedienteBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if(!string.IsNullOrWhiteSpace(RecepNroExpedienteBox.Text))
+        {
+            RecepOficinaTextBox.Text = string.Empty;
+        }
+    }
+
+    private void RecepOficinaTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        // Si el usuario sigue escribiendo, la seleccion anterior ya no es valida hasta que elija de nuevo
+        _oficinaSeleccionadaRecepcion = null;
+
+        if (!string.IsNullOrWhiteSpace(RecepOficinaTextBox.Text))
+        {
+            RecepNroExpedienteBox.Text = string.Empty;
+        }
+
+        var texto = RecepOficinaTextBox.Text;
+
+        if (string.IsNullOrWhiteSpace(texto))
+        {
+            RecepOficinaPopup.IsOpen = false;
+            return;
+        }
+
+        var filtradas = _oficinaCacheService.Oficinas
+            .Where(o => o.Nombre.Contains(texto, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        RecepOficinaSuggestionsListBox.ItemsSource = filtradas;
+        RecepOficinaPopup.IsOpen = filtradas.Count > 0;
+
+        if (filtradas.Count > 0)
+        {
+            RecepOficinaSuggestionsListBox.SelectedIndex = 0;
+        }
+    }
+
+    private void RecepOficinaTextBox_PreviewGotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        RecepOficinaTextBox.SelectAll();
+    }
+
+    private void RecepOficinaTextBox_GotMouseCapture(object sender, MouseEventArgs e)
+    {
+        RecepOficinaTextBox.SelectAll();
+    }
+
+    private void RecepOficinaTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (!RecepOficinaPopup.IsOpen) return;
+
+        switch (e.Key)
+        {
+            case Key.Down:
+                if (RecepOficinaSuggestionsListBox.SelectedIndex < RecepOficinaSuggestionsListBox.Items.Count - 1)
+                    RecepOficinaSuggestionsListBox.SelectedIndex++;
+                e.Handled = true;
+                break;
+
+            case Key.Up:
+                if (RecepOficinaSuggestionsListBox.SelectedIndex > 0)
+                    RecepOficinaSuggestionsListBox.SelectedIndex--;
+                e.Handled = true;
+                break;
+
+            case Key.Enter:
+                RecepConfirmarSeleccionOficina();
+                e.Handled = true;
+                break;
+
+            case Key.Escape or Key.Tab:
+                RecepOficinaPopup.IsOpen = false;
+                if (e.Key == Key.Tab)
+                {
+                    // Mueve el foco al siguiente control
+                    var request = new TraversalRequest(FocusNavigationDirection.Next);
+                    RecepOficinaTextBox.MoveFocus(request);
+                }
+                e.Handled = true;
+                break;
+        }
+    }
+
+    private void RecepOficinaSuggestionsListBox_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        RecepConfirmarSeleccionOficina();
+    }
+
+    private void RecepConfirmarSeleccionOficina()
+    {
+        if (RecepOficinaSuggestionsListBox.SelectedItem is OficinaOption oficina)
+        {
+            _oficinaSeleccionadaRecepcion = oficina;
+            RecepOficinaTextBox.TextChanged -= RecepOficinaTextBox_TextChanged; // evita reabrir el popup al setear el texto
+            RecepOficinaTextBox.Text = oficina.Nombre;
+            RecepOficinaTextBox.CaretIndex = RecepOficinaTextBox.Text.Length;
+            RecepOficinaTextBox.TextChanged += RecepOficinaTextBox_TextChanged;
+
+            RecepOficinaPopup.IsOpen = false;
+        }
+    }
+
+    private async void RecepBuscarButton_Click(object sender, RoutedEventArgs e)
+    {
+        var nro = RecepNroExpedienteBox.Text;
+
+        if (string.IsNullOrWhiteSpace(RecepNroExpedienteBox.Text))
+        {
+            MessageBox.Show("Nro de Expediente requerido.");
+            return;
+        }
+
+        RecepNroExpedienteBox.Focus();
+
+        try
+        {
+            _recepcionService.ValidateExp(RecepNroExpedienteBox.Text);
+        }
+        catch (ArgumentException ex)
+        {
+            MessageBox.Show(ex.Message);
+            return;
+        }
+
+        setRecibiendoState(true);
+
+        RecepcionItem? item;
+        try
+        {
+            item = await _recepcionService.PrepararIndividualAsync(nro);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error al buscar: {ex.Message}");
+            setRecepButtonEnabled(true);
+            return;
+        }
+        finally
+        {
+            RecepBuscandoProgressBar.Visibility = Visibility.Collapsed;
+            RecepBuscandoText.Visibility = Visibility.Collapsed;
+        }
+
+        if (item == null)
+        {
+            MessageBox.Show("Expediente no encontrado para Recepcion.");
+            setRecepButtonEnabled(true);
+            return;
+        }
+
+        var confirmWindow = new ConfirmarRecepcionWindow(item);
+        if (confirmWindow.ShowDialog() != true)
+        {
+            setRecepButtonEnabled(true);
+            return;
+        }
+
+        setRecepButtonEnabled(true);
+        RecepNroExpedienteBox.Clear();
+
+        try
+        {
+            var admitido = await _recepcionService.ConfirmarIndividualAsync(nro);
+
+            if (admitido)
+            {
+                await MostrarToastAsync($"Expediente {nro} recibido con exito.", esError: false);
+            }
+            else
+            {
+                await MostrarToastAsync($"No se pudo recibir el expediente {nro}.", esError: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            await MostrarToastAsync($"Error al recibir {nro}: {ex.Message}", esError: true);
+        }
+    }
+    private void setRecibiendoState(bool buscando)
+    {
+        RecepBuscandoProgressBar.Visibility = buscando ? Visibility.Visible : Visibility.Collapsed;
+        RecepBuscandoText.Visibility = buscando ? Visibility.Visible : Visibility.Collapsed;
+        setRecepButtonEnabled(!buscando);
+    }
+
+    private void setRecepButtonEnabled(bool enabled)
+    {
+        RecepBuscarButton.IsEnabled = enabled;
+        RecepOficinaBuscarButton.IsEnabled = enabled;
+        RecepConfirmarSeleccionadosButton.IsEnabled = enabled;
+    }
+
+    private async void RecepOficinaBuscarButton_Click(object sender, RoutedEventArgs e)
+    {
+        var oficina = RecepOficinaTextBox.Text;
+
+        if (string.IsNullOrWhiteSpace(oficina))
+        {
+            MessageBox.Show("Ingrese una oficina.");
+            return;
+        }
+
+        if (_oficinaSeleccionadaRecepcion is not OficinaOption oficinaSeleccionada)
+        {
+            MessageBox.Show("Seleccione una Oficina Valida");
+            return;
+        }
+
+        RecepOficinaTextBox.Focus();
+
+        RecepOficinaBuscandoProgressBar.Visibility = Visibility.Visible;
+        setRecepButtonEnabled(false);
+
+        try
+        {
+            _recepcionEncontrados = await _recepcionService.BuscarPorOficinaAsync(oficina);
+            RecepOficinaGrid.ItemsSource = null;
+            RecepOficinaGrid.ItemsSource = _recepcionEncontrados;
+
+            if (_recepcionEncontrados.Count == 0)
+            {
+                MessageBox.Show("No se encontraron expedientes para esa oficina.");
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error al buscar: {ex.Message}");
+        }
+        finally
+        {
+            RecepOficinaBuscandoProgressBar.Visibility = Visibility.Collapsed;
+            setRecepButtonEnabled(true);
+            RecepOficinaGrid.Focus();
+        }
+    }
+
+    private async void RecepConfirmarSeleccionadosButton_Click(object sender, RoutedEventArgs e)
+    {
+        RecepOficinaGrid.CommitEdit(DataGridEditingUnit.Row, true);
+
+        var seleccionados = _recepcionEncontrados.Where(r => r.Seleccionado).ToList();
+
+        if (seleccionados.Count == 0)
+        {
+            MessageBox.Show("No hay expedientes seleccionados.");
+            return;
+        }
+
+        var confirmWindow = new ConfirmarRecepcionMultipleWindow(seleccionados);
+        if (confirmWindow.ShowDialog() != true)
+        {
+            return;
+        }
+
+        setRecepButtonEnabled(false);
+
+        try
+        {
+            var nrosSeleccionados = seleccionados.Select(r => r.NroExpediente).ToList();
+            var result = await _recepcionService.AdmitBulkAsync(RecepOficinaTextBox.Text, nrosSeleccionados);
+            RecepOficinaGrid.ItemsSource = null;
+            setRecepButtonEnabled(true);
+
+
+            await MostrarToastAsync(
+                $"Recibidos: {result.Admitted.Count} de {nrosSeleccionados.Count}." +
+                (result.NotFound.Count > 0 ? $" No encontrados: {result.NotFound.Count}." : ""),
+                esError: result.NotFound.Count > 0);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error al recibir seleccionados: {ex.Message}");
+        }
+    }
+
     //Globales
 
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -736,7 +1017,7 @@ public partial class MainWindow : Window
                 e.Handled = true;
                 break;
             case Key.Enter:
-                if(!OficinaPopup.IsOpen && !ResolucionOficinaPopup.IsOpen){
+                if(!OficinaPopup.IsOpen && !ResolucionOficinaPopup.IsOpen && !RecepOficinaPopup.IsOpen){
                     HandleEnterShortcut();
                     e.Handled = true;
                 }
@@ -767,7 +1048,19 @@ public partial class MainWindow : Window
                 }
                 break;
             case 3: // Recepcion
-                // Implementar si es necesario
+                if (RecepBuscarButton.IsEnabled && RecepNroExpedienteBox.Text != string.Empty)
+                {
+                    RecepBuscarButton_Click(this, new RoutedEventArgs());
+                }
+                else if (RecepOficinaBuscarButton.IsEnabled && RecepOficinaTextBox.Text != string.Empty && RecepOficinaTextBox.IsFocused)
+                {
+                    RecepOficinaBuscarButton_Click(this, new RoutedEventArgs());
+                } 
+                else if (RecepConfirmarSeleccionadosButton.IsEnabled && RecepOficinaGrid != null)
+                {
+                    RecepConfirmarSeleccionadosButton_Click(this, new RoutedEventArgs());
+                }
+
                 break;
         }
     }
@@ -776,4 +1069,6 @@ public partial class MainWindow : Window
     {
 
     }
+
+    
 }

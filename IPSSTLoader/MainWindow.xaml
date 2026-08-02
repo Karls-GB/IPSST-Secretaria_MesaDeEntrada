@@ -40,7 +40,7 @@
 
                     <StackPanel Grid.Row="1" Grid.Column="1" Margin="20,10,0,0">
                         <TextBlock Text="Historial de busquedas:" FontWeight="Bold" Margin="0,0,0,10"/>
-                        <ListBox x:Name="HistorialListBox" MaxHeight="530" HorizontalAlignment="Stretch"
+                        <ListBox x:Name="HistorialListBox"  HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                                     MouseDoubleClick="HistorialListBox_MouseDoubleClick"
                                     ToolTip="Doble click para volver a buscar" Height="100"/>
                     </StackPanel>
@@ -181,9 +181,73 @@
             </TabItem>
 
             <TabItem Header="Recepcion">
+                <Grid Margin="20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
+                    <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,10">
+                        <TextBlock Text="Nro. Expediente:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <TextBox x:Name="RecepNroExpedienteBox" Width="250" VerticalAlignment="Center" TextChanged="RecepNroExpedienteBox_TextChanged"/>
+                        <Button x:Name="RecepBuscarButton" Content="Recibir" Margin="10,0,0,0"
+                                Padding="15,5" Click="RecepBuscarButton_Click"/>
+                        <ProgressBar x:Name="RecepBuscandoProgressBar" IsIndeterminate="True" Width="120" Height="18"
+                                     Margin="15,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/>
+                        <TextBlock x:Name="RecepBuscandoText" Text="Recibiendo..." VerticalAlignment="Center"
+                                   Margin="8,0,0,0" Foreground="Gray" Visibility="Collapsed"/>
+                    </StackPanel>
+
+                    <Border Grid.Row="1" Height="1" Background="DarkGray" Margin="0,5,0,10"/>
+
+                    <StackPanel Orientation="Horizontal" Grid.Row="2" Margin="0,0,0,10">
+                        <TextBlock Text="Oficina Origen:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <TextBox   x:Name="RecepOficinaTextBox" TextChanged="RecepOficinaTextBox_TextChanged"
+                                   PreviewKeyDown="RecepOficinaTextBox_PreviewKeyDown" PreviewGotKeyboardFocus="RecepOficinaTextBox_PreviewGotKeyboardFocus"
+                                   GotMouseCapture="RecepOficinaTextBox_GotMouseCapture"
+                                   Width="350" VerticalAlignment="Center"/>
+                        
+                        <Popup x:Name="RecepOficinaPopup" PlacementTarget="{Binding ElementName=RecepOficinaTextBox}"
+                                   Placement="Bottom" Width="350" StaysOpen="False">
+                                <Border Background="White" BorderBrush="Gray" BorderThickness="1">
+                                    <ListBox x:Name="RecepOficinaSuggestionsListBox" MaxHeight="200"
+                                           DisplayMemberPath="Nombre"
+                                           PreviewMouseLeftButtonUp="RecepOficinaSuggestionsListBox_PreviewMouseLeftButtonUp"/>
+                                </Border>
+                            </Popup>
+                        <Button x:Name="RecepOficinaBuscarButton" Content="Buscar" Margin="10,0,0,0"
+                                Padding="15,5" Click="RecepOficinaBuscarButton_Click"/>
+                        <ProgressBar x:Name="RecepOficinaBuscandoProgressBar" IsIndeterminate="True" Width="120" Height="18"
+                                     Margin="15,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/>
+                    </StackPanel>
+
+                    <DataGrid x:Name="RecepOficinaGrid" Grid.Row="3" AutoGenerateColumns="False" CanUserReorderColumns="False"
+                              CanUserAddRows="False" CanUserDeleteRows="False" SelectionMode="Single" Margin="0,0,0,10">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="Recibir" Width="60">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                            <CheckBox IsChecked="{Binding Path=Seleccionado, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Nro. Expediente" Binding="{Binding NroExpediente}" Width="150" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Asunto" Binding="{Binding Asunto}" Width="200" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Causante" Binding="{Binding Causante}" Width="420" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Folios" Binding="{Binding Folios}" Width="70" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Oficina Origen" Binding="{Binding OficinaOrigen}" Width="200" IsReadOnly="True"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <Button x:Name="RecepConfirmarSeleccionadosButton" Content="Recibir Seleccionados" Grid.Row="4"
+                            Width="180" Padding="10,5" HorizontalAlignment="Left" Click="RecepConfirmarSeleccionadosButton_Click"/>
+
+                </Grid>
             </TabItem>
-            
+
 
         </TabControl>
 

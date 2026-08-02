@@ -156,9 +156,29 @@ public class PlaywrightBusqueda : IAutomationBusqueda
 
             _logger.LogDebug("Leyendo página {Pagina} de observaciones. Cantidad de filas: {RowCount}", pagina, rowCount);
 
+            if (rowCount > 0)
+            {
+                try
+                {
+                    await page.WaitForSelectorAsync($"input[name='W0050EXPOBSERVFECHA_{rowCount.ToString("D4")}']",
+                        new PageWaitForSelectorOptions { Timeout = 5000 });
+                }
+                catch (TimeoutException)
+                {
+                    _logger.LogWarning("nRC_Gridobserv reporto {RowCount} pero la ultima fila no aparecio a tiempo", rowCount);
+                }
+            }
+
             for (int i = 1; i <= rowCount; i++)
             {
                 var suffix = i.ToString("D4");
+                var fechaSelector = $"input[name='W0050EXPOBSERVFECHA_{suffix}']";
+                var existe = await page.Locator(fechaSelector).CountAsync() > 0;
+
+                if (!existe)
+                {
+                    break;
+                }
 
                 observaciones.Add(new ObservacionItem
                 {
