@@ -1,7 +1,6 @@
 ﻿using IPSST.Application.Services;
 using IPSST.Domain.Entities;
-using IPSSTLoader.Domain.Entities;
-using IPSSTLoader.Domain.Interface;
+using IPSST.Domain.Interface;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 using System;
@@ -10,7 +9,7 @@ using System.Text;
 using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace IPSSTLoader.Infrastructure.Automation;
+namespace IPSST.Infrastructure.Automation;
 
 public class PlaywrightPase : IAutomationPase
 {

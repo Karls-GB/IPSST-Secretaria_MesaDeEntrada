@@ -1,12 +1,12 @@
-﻿using IPSSTLoader.Domain.Entities;
-using IPSSTLoader.Domain.Enums;
-using IPSSTLoader.Domain.Interface;
+﻿using IPSST.Domain.Entities;
+using IPSST.Domain.Enums;
+using IPSST.Domain.Interface;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace IPSSTLoader.Infrastructure.Persistence;
+namespace IPSST.Infrastructure.Persistence;
 
 public class UploadJobRepository : IUploadJobRepository
 {

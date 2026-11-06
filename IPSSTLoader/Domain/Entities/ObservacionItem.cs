@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace IPSSTLoader.Domain.Entities;
+namespace IPSST.Domain.Entities;
 
 public class ObservacionItem
 {

@@ -1,4 +1,4 @@
-﻿<Window x:Class="IPSSTLoader.Views.ConfirmarPaseWindow"
+﻿<Window x:Class="IPSST.Views.ConfirmarPaseWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Confirmar Pase" Height="320" Width="420"

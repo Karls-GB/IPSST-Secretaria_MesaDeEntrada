@@ -1,8 +1,8 @@
-﻿<Application x:Class="IPSSTLoader.App"
+﻿<Application x:Class="IPSST.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:IPSSTLoader"
+             xmlns:local="clr-namespace:IPSST"
              ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
          

@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using IPSSTLoader.Domain.Enums;
+using IPSST.Domain.Enums;
 
-namespace IPSSTLoader.Domain.Entities;
+namespace IPSST.Domain.Entities;
 
 public class UploadJob
 {

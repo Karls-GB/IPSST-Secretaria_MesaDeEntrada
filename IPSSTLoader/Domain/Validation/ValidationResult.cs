@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace IPSSTLoader.Domain.Validation;
+namespace IPSST.Domain.Validation;
 
 public class ValidationResult
 {

@@ -1,4 +1,4 @@
-﻿<Window x:Class="IPSSTLoader.Views.ResultadoBusquedaWindow"
+﻿<Window x:Class="IPSST.Views.ResultadoBusquedaWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Resultado de Busqueda" Height="600" Width="800"

@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace IPSSTLoader.Infrastructure.Automation;
+namespace IPSST.Infrastructure.Automation;
 
 public class PlaywrightSession : IAsyncDisposable
 {

@@ -1,12 +1,11 @@
 ﻿using IPSST.Application.Configuration;
 using IPSST.Application.Services;
-using IPSSTLoader.Application.Services;
-using IPSSTLoader.Application.Workflows;
-using IPSSTLoader.Domain.Interface;
-using IPSSTLoader.Domain.Validation;
-using IPSSTLoader.Infrastructure.Automation;
-using IPSSTLoader.Infrastructure.Persistence;
-using IPSSTLoader.Views;
+using IPSST.Application.Workflows;
+using IPSST.Domain.Interface;
+using IPSST.Domain.Validation;
+using IPSST.Infrastructure.Automation;
+using IPSST.Infrastructure.Persistence;
+using IPSST.Views;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,7 +16,7 @@ using System.Data;
 using System.IO;
 using System.Windows;
 
-namespace IPSSTLoader
+namespace IPSST
 {
 
     public partial class App : System.Windows.Application

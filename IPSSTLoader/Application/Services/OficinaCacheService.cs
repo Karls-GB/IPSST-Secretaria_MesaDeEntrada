@@ -1,5 +1,5 @@
 ﻿using IPSST.Domain.Entities;
-using IPSSTLoader.Domain.Interface;
+using IPSST.Domain.Interface;
 using System;
 using System.Collections.Generic;
 using System.Text;

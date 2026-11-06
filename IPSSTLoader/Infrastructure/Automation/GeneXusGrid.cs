@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace IPSSTLoader.Infrastructure.Automation;
+namespace IPSST.Infrastructure.Automation;
 
 // GeneXus informa la cantidad de filas (nRC_<Grid>) antes de terminar de dibujarlas.
 // Antes de leer una tabla hay que esperar a que las filas existan en la pagina.

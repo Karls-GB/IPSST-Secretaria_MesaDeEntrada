@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace IPSSTLoader.Domain.Enums;
+namespace IPSST.Domain.Enums;
 
 public enum UploadStatus
 {

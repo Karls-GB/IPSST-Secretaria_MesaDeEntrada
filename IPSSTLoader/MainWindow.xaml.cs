@@ -2,10 +2,7 @@
 using IPSST.Application.Services;
 using IPSST.Domain.Entities;
 using IPSST.Views;
-using IPSSTLoader.Application.Services;
-using IPSSTLoader.Application.Workflows;
-using IPSSTLoader.Domain.Entities;
-using IPSSTLoader.Views;
+using IPSST.Application.Workflows;
 using System.Collections.ObjectModel;
 using System.Text;
 using System.Windows;
@@ -18,7 +15,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace IPSSTLoader;
+namespace IPSST;
 public partial class MainWindow : Window
 {
     private readonly BusquedaService _busquedaService;

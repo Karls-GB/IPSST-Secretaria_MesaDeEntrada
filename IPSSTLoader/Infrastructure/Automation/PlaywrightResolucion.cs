@@ -1,13 +1,12 @@
 ﻿using IPSST.Domain.Entities;
-using IPSSTLoader.Domain.Entities;
-using IPSSTLoader.Domain.Interface;
+using IPSST.Domain.Interface;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace IPSSTLoader.Infrastructure.Automation;
+namespace IPSST.Infrastructure.Automation;
 
 public class PlaywrightResolucion : IAutomationResolucion
 {    

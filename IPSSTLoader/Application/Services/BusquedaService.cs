@@ -1,12 +1,12 @@
-﻿using IPSSTLoader.Domain.Entities;
-using IPSSTLoader.Domain.Interface;
-using IPSSTLoader.Domain.Validation;
+﻿using IPSST.Domain.Entities;
+using IPSST.Domain.Interface;
+using IPSST.Domain.Validation;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace IPSSTLoader.Application.Services;
+namespace IPSST.Application.Services;
 
 public class BusquedaService
 {

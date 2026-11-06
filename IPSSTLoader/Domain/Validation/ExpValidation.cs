@@ -5,9 +5,8 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using IPSST.Domain.Entities;
-using IPSSTLoader.Domain.Entities;
 
-namespace IPSSTLoader.Domain.Validation;
+namespace IPSST.Domain.Validation;
 
 public class ExpValidation
 {

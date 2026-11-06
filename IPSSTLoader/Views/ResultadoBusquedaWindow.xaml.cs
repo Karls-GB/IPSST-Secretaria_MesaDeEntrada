@@ -1,4 +1,4 @@
-﻿using IPSSTLoader.Domain.Entities;
+﻿using IPSST.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -11,7 +11,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
-namespace IPSSTLoader.Views;
+namespace IPSST.Views;
 
 public partial class ResultadoBusquedaWindow : Window
 {

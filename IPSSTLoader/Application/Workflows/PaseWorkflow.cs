@@ -1,14 +1,13 @@
 ﻿using IPSST.Domain.Entities;
-using IPSSTLoader.Domain.Entities;
-using IPSSTLoader.Domain.Enums;
-using IPSSTLoader.Domain.Interface;
-using IPSSTLoader.Domain.Validation;
+using IPSST.Domain.Enums;
+using IPSST.Domain.Interface;
+using IPSST.Domain.Validation;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 
-namespace IPSSTLoader.Application.Workflows;
+namespace IPSST.Application.Workflows;
 
 public class PaseWorkflow
 {
