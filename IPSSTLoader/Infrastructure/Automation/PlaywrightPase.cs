@@ -25,12 +25,25 @@ public class PlaywrightPase : IAutomationPase
         _logger = logger;
     }
 
+    // Navega a la cola de Pases solo si no se esta ya en ella
+    private async Task IrAColaDePasesAsync(IPage page)
+    {
+        if (page.Url.Contains($"hviewexppases.{_session.ExtentionUrl}", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogDebug("Ya en la cola de Pases, se omite la navegacion");
+            return;
+        }
+
+        _logger.LogDebug("Navegando a la cola de Pases");
+        await page.GotoAsync(PaseURL);
+        await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+    }
+
     public async Task<List<OficinaOption>> GetOficinasDestinoAsync()
     {
         return await _session.RunAsync(async page =>
         {
-            await page.GotoAsync(PaseURL);
-            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            await IrAColaDePasesAsync(page);
 
             var rowCountRaw = await page.InputValueAsync("input[name='W0009nRC_Gridexppase']");
             int.TryParse(rowCountRaw, out var rowCount);
@@ -70,7 +83,7 @@ public class PlaywrightPase : IAutomationPase
     {
         return await _session.RunAsync<PasePreparation?>(async page =>
         {
-            await page.GotoAsync(PaseURL);
+            await IrAColaDePasesAsync(page);
             await page.FillAsync("input[name='W0009_TEXTOBUSQUEDA']", nroExpediente);
             await page.ClickAsync("input[name='W0009BUTTON2']");
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
