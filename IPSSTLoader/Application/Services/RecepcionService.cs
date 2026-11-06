@@ -118,7 +118,7 @@ public class RecepcionService
         return false;
     }
 
-    public async Task<List<RecepcionItem>> BuscarPorOficinaAsync(string oficina)
+    public async Task<ListadoRecepcion> BuscarPorOficinaAsync(string oficina)
     {
         if (string.IsNullOrWhiteSpace(oficina))
         {
@@ -217,11 +217,13 @@ public class RecepcionService
         await _uploadJobRepository.UpdateAsync(job);
 
         // Se devuelve el resultado acumulado a traves de todos los intentos, no solo el ultimo
+        var notFound = ultimoResultado?.NotFound ?? new List<string>();
+
         return new BulkAdmitResult
         {
             Admitted = nroExpedientes.Except(pending).ToList(),
-            NotFound = ultimoResultado?.NotFound ?? new List<string>(),
-            Failed = pending
+            NotFound = notFound,
+            Failed = pending.Except(notFound).ToList()
         };
     }
 }

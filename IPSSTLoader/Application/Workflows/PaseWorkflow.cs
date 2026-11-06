@@ -144,5 +144,8 @@ public class PaseWorkflow
         job.Status = UploadStatus.Failed;
         job.LastError = "Se Alcanzaron los Intentos Maximos de Pase";
         await _uploadJobRepository.UpdateAsync(job);
+
+        // Se lanza para que la UI no informe el Pase como exitoso
+        throw new InvalidOperationException(job.LastError);
     }
 }

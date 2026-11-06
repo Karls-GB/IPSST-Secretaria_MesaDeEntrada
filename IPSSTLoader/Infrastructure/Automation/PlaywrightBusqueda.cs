@@ -38,9 +38,7 @@ public class PlaywrightBusqueda : IAutomationBusqueda
 
             //Ver Cantidad de Resultados
             var rowCountRaw = await page.InputValueAsync("input[name='W0007nRC_Gridexp']");
-            int rowCount = int.Parse(rowCountRaw);
-
-            if (rowCount == 0)
+            if (!int.TryParse(rowCountRaw?.Trim(), out var rowCount) || rowCount == 0)
             {
                 _logger.LogInformation("No se encontraron resultados para el expediente: {NroExpediente}", nroExpediente);
                 return null;
@@ -49,8 +47,11 @@ public class PlaywrightBusqueda : IAutomationBusqueda
             //TODO: Agregar funcionalidad para mas de un resultado.
             //Se hara cuando la opcion de ingresar dni o nombre este disponible
 
-            var expId = await page.InputValueAsync("input[name='W0007_EXPID_0001']");
-            var cuitCuil = await page.InputValueAsync("input[name='W0007_EXPCUITCUIL_0001']");
+            await GeneXusGrid.EsperarFilasAsync(page, "W0007nRC_Gridexp", "W0007_EXPID", _logger, "Gridexp (Busqueda)");
+
+            var expId = await GeneXusGrid.LeerCampoAsync(page, "W0007_EXPID", 1)
+                ?? throw new InvalidOperationException("La tabla de resultados no termino de cargar. Intente nuevamente");
+            var cuitCuil = await GeneXusGrid.LeerCampoAsync(page, "W0007_EXPCUITCUIL", 1);
 
             await page.ClickAsync("#W0007_DISPLAY_0001");
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -106,7 +107,7 @@ public class PlaywrightBusqueda : IAutomationBusqueda
             bool enSecretaria = oficinaRaw?.Contains("SECRETARIA", StringComparison.OrdinalIgnoreCase) == true;
             bool enTransito = estadoRaw?.Contains("EN TRANSITO", StringComparison.OrdinalIgnoreCase) == true;
 
-            result.Observaciones = await ObtenerObservacionesAsync(page, expId);
+            (result.Observaciones, result.ObservacionesFaltantes) = await ObtenerObservacionesAsync(page, expId);
             _logger.LogInformation("Busqueda las observaciones de {NroExpediente} completada: {CantidadObservaciones} observaciones encontradas", nroExpediente, result.Observaciones.Count);
 
             if (enSecretaria && !enTransito)
@@ -129,20 +130,24 @@ public class PlaywrightBusqueda : IAutomationBusqueda
 
         await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var rowCountRaw = await page.InputValueAsync("input[name='W0009nRC_Gridexppase']");
-        int.TryParse(rowCountRaw?.Trim(), out var rawCount);
+        var rawCount = await GeneXusGrid.LeerCantidadAsync(page, "W0009nRC_Gridexppase");
 
         if (rawCount == 0)
         {
             return null;
         }
 
-        return await page.InputValueAsync("input[name='W0009EXPPASEUSUARIO_0001']");
+        await GeneXusGrid.EsperarFilasAsync(page, "W0009nRC_Gridexppase", "W0009EXPPASEUSUARIO", _logger, "Gridexppase (Trabajado por)");
+        return await GeneXusGrid.LeerCampoAsync(page, "W0009EXPPASEUSUARIO", 1);
     }
 
-    private async Task<List<ObservacionItem>> ObtenerObservacionesAsync(IPage page, string expId)
+    private async Task<(List<ObservacionItem> Observaciones, int Faltantes)> ObtenerObservacionesAsync(IPage page, string expId)
     {
+        const string campoNrc = "W0050nRC_Gridobserv";
+        const string campoFila = "W0050EXPOBSERVFECHA";
+
         var observaciones = new List<ObservacionItem>();
+        int faltantes = 0;
 
         await page.ClickAsync("#W0047TAB_0002");
         await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -151,41 +156,35 @@ public class PlaywrightBusqueda : IAutomationBusqueda
 
         while (true)
         {
-            var rowCountRaw = await page.InputValueAsync("input[name='W0050nRC_Gridobserv']");
-            int.TryParse(rowCountRaw, out var rowCount);
+            // Primera pagina: se recarga volviendo a abrir la solapa. Ultima pagina: volviendo a pedir #W0050ULTIMO
+            var selectorRecarga = pagina == 1 ? "#W0047TAB_0002" : "#W0050ULTIMO";
+            await GeneXusGrid.EsperarFilasAsync(page, campoNrc, campoFila, _logger, $"Gridobserv pagina {pagina}",
+                recargar: async () =>
+                {
+                    await page.ClickAsync(selectorRecarga);
+                    await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+                });
 
+            var rowCount = await GeneXusGrid.LeerCantidadAsync(page, campoNrc);
             _logger.LogDebug("Leyendo página {Pagina} de observaciones. Cantidad de filas: {RowCount}", pagina, rowCount);
-
-            if (rowCount > 0)
-            {
-                try
-                {
-                    await page.WaitForSelectorAsync($"input[name='W0050EXPOBSERVFECHA_{rowCount.ToString("D4")}']",
-                        new PageWaitForSelectorOptions { Timeout = 5000 });
-                }
-                catch (TimeoutException)
-                {
-                    _logger.LogWarning("nRC_Gridobserv reporto {RowCount} pero la ultima fila no aparecio a tiempo", rowCount);
-                }
-            }
 
             for (int i = 1; i <= rowCount; i++)
             {
-                var suffix = i.ToString("D4");
-                var fechaSelector = $"input[name='W0050EXPOBSERVFECHA_{suffix}']";
-                var existe = await page.Locator(fechaSelector).CountAsync() > 0;
+                var fecha = await GeneXusGrid.LeerCampoAsync(page, campoFila, i);
 
-                if (!existe)
+                if (fecha is null)
                 {
-                    break;
+                    // La fila no cargo: se cuenta y se sigue con las demas
+                    faltantes++;
+                    continue;
                 }
 
                 observaciones.Add(new ObservacionItem
                 {
-                    FechaHora = await page.InputValueAsync($"input[name='W0050EXPOBSERVFECHA_{suffix}']"),
-                    Descripcion = await page.InputValueAsync($"input[name='W0050EXPOBSERVACIONES_{suffix}']"),
-                    Usuario = await page.InputValueAsync($"input[name='W0050EXPOBSERVUSUNOMBRE_{suffix}']"),
-                    Oficina = await page.InputValueAsync($"input[name='W0050EXPOBSERVOFINOMBRECOMPLETO_{suffix}']")
+                    FechaHora = fecha,
+                    Descripcion = await GeneXusGrid.LeerCampoAsync(page, "W0050EXPOBSERVACIONES", i) ?? string.Empty,
+                    Usuario = await GeneXusGrid.LeerCampoAsync(page, "W0050EXPOBSERVUSUNOMBRE", i) ?? string.Empty,
+                    Oficina = await GeneXusGrid.LeerCampoAsync(page, "W0050EXPOBSERVOFINOMBRECOMPLETO", i) ?? string.Empty
                 });
             }
 
@@ -208,6 +207,6 @@ public class PlaywrightBusqueda : IAutomationBusqueda
             pagina++;
         }
 
-        return observaciones;
+        return (observaciones, faltantes);
     }
 }

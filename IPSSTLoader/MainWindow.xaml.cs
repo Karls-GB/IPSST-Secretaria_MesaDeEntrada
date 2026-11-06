@@ -81,6 +81,7 @@ public partial class MainWindow : Window
     public async Task EjecutarBusquedaAsync(string nroExpediente)
     {
         setBuscandoState(true);
+        int observacionesFaltantes = 0;
 
         try
         {
@@ -104,14 +105,26 @@ public partial class MainWindow : Window
             {
                 _resultadoBusquedaWindow.UpdateResultado(result);
             }
+
+            observacionesFaltantes = result.ObservacionesFaltantes;
         }
         catch (ArgumentException ex)
         {
             MessageBox.Show(ex.Message);
         }
+        catch (Exception ex)
+        {
+            // BusquedaService ya registra el error en el log
+            MessageBox.Show($"Error al buscar: {ex.Message}");
+        }
         finally
         {
             setBuscandoState(false);
+        }
+
+        if (observacionesFaltantes > 0)
+        {
+            await MostrarToastAsync($"{observacionesFaltantes} observaciones no terminaron de cargar. Vuelva a buscar para verlas.", esError: true);
         }
     }
 
@@ -319,9 +332,11 @@ public partial class MainWindow : Window
         {
             result = await _paseWorkflow.PrepararAsync(PaseNroExpedienteBox.Text);
         }
-        finally
+        catch (Exception ex)
         {
-
+            MessageBox.Show($"Error al buscar el expediente: {ex.Message}");
+            ConfirmarPaseButton.IsEnabled = true;
+            return;
         }
 
         if (result == null)
@@ -597,14 +612,16 @@ public partial class MainWindow : Window
         {
             result = await _resolucionWorkflow.PrepararResolucionAsync(ResolucionNroExpedienteBox.Text);
         }
-        finally
+        catch (Exception ex)
         {
-
+            MessageBox.Show($"Error al buscar el expediente: {ex.Message}");
+            ConfirmarResolucionButton.IsEnabled = true;
+            return;
         }
 
         if (result == null)
         {
-            MessageBox.Show("Expediente no encontrado en la cola de Pases.");
+            MessageBox.Show("Expediente no encontrado en la cola de Resoluciones.");
             ConfirmarResolucionButton.IsEnabled = true;
             return;
         }
@@ -926,11 +943,16 @@ public partial class MainWindow : Window
 
         try
         {
-            _recepcionEncontrados = await _recepcionService.BuscarPorOficinaAsync(oficina);
+            var listado = await _recepcionService.BuscarPorOficinaAsync(oficina);
+            _recepcionEncontrados = listado.Items;
             RecepOficinaGrid.ItemsSource = null;
             RecepOficinaGrid.ItemsSource = _recepcionEncontrados;
 
-            if (_recepcionEncontrados.Count == 0)
+            if (listado.FilasFaltantes > 0)
+            {
+                MessageBox.Show($"{listado.FilasFaltantes} expedientes no terminaron de cargar y no aparecen en la lista. Vuelva a buscar.");
+            }
+            else if (_recepcionEncontrados.Count == 0)
             {
                 MessageBox.Show("No se encontraron expedientes para esa oficina.");
             }
@@ -974,15 +996,16 @@ public partial class MainWindow : Window
             RecepOficinaGrid.ItemsSource = null;
             setRecepButtonEnabled(true);
 
-
             await MostrarToastAsync(
                 $"Recibidos: {result.Admitted.Count} de {nrosSeleccionados.Count}." +
-                (result.NotFound.Count > 0 ? $" No encontrados: {result.NotFound.Count}." : ""),
-                esError: result.NotFound.Count > 0);
+                (result.NotFound.Count > 0 ? $" No encontrados: {result.NotFound.Count}." : "") +
+                (result.Failed.Count > 0 ? $" Fallidos: {result.Failed.Count}." : ""),
+                esError: result.NotFound.Count > 0 || result.Failed.Count > 0);
         }
         catch (Exception ex)
         {
             MessageBox.Show($"Error al recibir seleccionados: {ex.Message}");
+            setRecepButtonEnabled(true);
         }
     }
 

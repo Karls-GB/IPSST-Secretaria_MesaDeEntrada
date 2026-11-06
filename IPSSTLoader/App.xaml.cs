@@ -33,13 +33,27 @@ namespace IPSSTLoader
 
             Log.Information("Iniciando aplicacion");
 
+            try
+            {
+                await IniciarAsync();
+            }
+            catch (Exception ex)
+            {
+                // Sin esto la app queda abierta sin ventanas (ShutdownMode = OnExplicitShutdown)
+                Log.Fatal(ex, "Error al iniciar la aplicacion");
+                MessageBox.Show($"No se pudo iniciar la aplicacion: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Shutdown();
+            }
+        }
+
+        private async Task IniciarAsync()
+        {
             var services = new ServiceCollection();
             ConfigureServices(services);
             ServiceProvider = services.BuildServiceProvider();
 
-            using (var scope = ServiceProvider.CreateScope())
+            using (var context = ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>().CreateDbContext())
             {
-                var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 context.Database.EnsureCreated();
             }
 
@@ -153,7 +167,7 @@ namespace IPSSTLoader
             services.AddSingleton<PlaywrightSession>(sp =>
                 new PlaywrightSession(headless, baseUrl, sp.GetRequiredService<ILogger<PlaywrightSession>>(), extentionUrl));
 
-            services.AddDbContext<AppDbContext>(options => options.UseSqlite("Data Source = ipsstloader.db"));
+            services.AddDbContextFactory<AppDbContext>(options => options.UseSqlite("Data Source = ipsstloader.db"));
             services.AddScoped<IUploadJobRepository, UploadJobRepository>();
             services.AddScoped<IAutomationBusqueda, PlaywrightBusqueda>();
             services.AddScoped<IAutomationPase, PlaywrightPase>();

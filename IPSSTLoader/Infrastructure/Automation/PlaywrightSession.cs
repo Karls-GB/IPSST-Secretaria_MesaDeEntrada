@@ -17,7 +17,9 @@ public class PlaywrightSession : IAsyncDisposable
     private string? _homeUrl;
 
     private readonly bool _headless;
-    private readonly TimeSpan _keepAliveInterval = TimeSpan.FromMinutes(10);
+    // El sitio corta la sesion a los ~15 min de inactividad
+    private readonly TimeSpan _keepAliveInterval = TimeSpan.FromMinutes(7);
+    private readonly TimeSpan _keepAliveCheckPeriod = TimeSpan.FromMinutes(1);
     private string _loginUrl => $"{BaseUrl}/expedientes/hexplogin.{ExtentionUrl}";
     private readonly ILogger<PlaywrightSession> _logger;
 
@@ -41,9 +43,21 @@ public class PlaywrightSession : IAsyncDisposable
         });
         _page = await _browser.NewPageAsync();
 
-        _page.Dialog += async(_, dialog) => await dialog.AcceptAsync();
+        // async void: una excepcion sin capturar aca cierra la aplicacion
+        _page.Dialog += async (_, dialog) =>
+        {
+            try
+            {
+                await dialog.AcceptAsync();
+            }
+            catch (PlaywrightException ex)
+            {
+                // El dialogo ya se cerro (navegacion o cierre automatico); no es un error real
+                _logger.LogDebug(ex, "No se pudo aceptar el dialogo: ya no estaba abierto");
+            }
+        };
 
-        _keepAliveTimer = new Timer(async _ => await KeepAliveTickAsync(), null, _keepAliveInterval, _keepAliveInterval);
+        _keepAliveTimer = new Timer(async _ => await KeepAliveTickAsync(), null, _keepAliveCheckPeriod, _keepAliveCheckPeriod);
     }
 
     public async Task<bool> LoginAsync(string username, string password)

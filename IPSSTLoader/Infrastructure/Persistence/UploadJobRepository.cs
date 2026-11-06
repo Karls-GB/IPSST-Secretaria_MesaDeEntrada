@@ -10,32 +10,37 @@ namespace IPSSTLoader.Infrastructure.Persistence;
 
 public class UploadJobRepository : IUploadJobRepository
 {
-    private readonly AppDbContext _context;
+    // Un contexto por operacion: evita errores de concurrencia si dos trabajos corren a la vez
+    private readonly IDbContextFactory<AppDbContext> _contextFactory;
 
-    public UploadJobRepository(AppDbContext context)
+    public UploadJobRepository(IDbContextFactory<AppDbContext> contextFactory)
     {
-        _context = context;
+        _contextFactory = contextFactory;
     }
 
     public async Task AddAsync(UploadJob job)
     {
-        _context.UploadJobs.Add(job);
-        await _context.SaveChangesAsync();
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        context.UploadJobs.Add(job);
+        await context.SaveChangesAsync();
     }
 
     public async Task UpdateAsync(UploadJob job)
     {
-        _context.UploadJobs.Update(job);
-        await _context.SaveChangesAsync();
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        context.UploadJobs.Update(job);
+        await context.SaveChangesAsync();
     }
 
     public async Task<List<UploadJob>> GetFailedAsync()
     {
-        return await _context.UploadJobs.Where(j => j.Status == UploadStatus.Failed).ToListAsync();
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.UploadJobs.Where(j => j.Status == UploadStatus.Failed).ToListAsync();
     }
 
     public async Task<UploadJob?> GetByIdAsync(Guid id)
     {
-        return await _context.UploadJobs.FindAsync(id);
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.UploadJobs.FindAsync(id);
     }
 }

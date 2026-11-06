@@ -10,6 +10,6 @@ public interface IAutomationRecepcion
 {
     Task<RecepcionItem?> PrepararRecepcionAsync(string nroExpediente);
     Task<bool> ConfirmarRecepcionAsync(string nroExpediente);
-    Task<List<RecepcionItem>> BuscarPorOficinaAsync(string oficina);
+    Task<ListadoRecepcion> BuscarPorOficinaAsync(string oficina);
     Task<BulkAdmitResult> AdmitBulkAsync(string oficina, List<string> nroExpedientes);
 }

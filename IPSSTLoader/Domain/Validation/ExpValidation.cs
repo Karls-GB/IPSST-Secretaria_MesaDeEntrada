@@ -77,7 +77,7 @@ public class ExpValidation
 
                 if (exp.Resolucion.Observaciones == null)
                 {
-                    result.Errors.Add("Onservacion de Resolucion Requerida");
+                    result.Errors.Add("Observacion de Resolucion Requerida");
                 }
                 break;
 

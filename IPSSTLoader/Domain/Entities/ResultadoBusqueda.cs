@@ -19,6 +19,8 @@ public class ResultadoBusqueda
     public string? Sucursal { get; set; }
     public string? TrabajadoPor { get; set; }
     public List<ObservacionItem> Observaciones { get; set; } = new();
+    // Observaciones que el sistema informo pero no terminaron de cargar
+    public int ObservacionesFaltantes { get; set; }
     public string? UsuarioPase { get; set; }
     public string? FechaPase { get; set; }
 }

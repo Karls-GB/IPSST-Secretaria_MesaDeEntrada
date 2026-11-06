@@ -9,5 +9,5 @@ namespace IPSSTLoader.Domain.Interface;
 public interface IAutomationResolucion
 {
     Task<ResPreparation?> PrepararResolucionAsync(string nroExpediente);
-    Task<bool> ConfirmarResAsync(string nroResolucion, DateTime fechaResolucion, string observacionesRes);
+    Task<bool> ConfirmarResAsync(string nroExpediente, string nroResolucion, DateTime fechaResolucion, string observacionesRes);
 }

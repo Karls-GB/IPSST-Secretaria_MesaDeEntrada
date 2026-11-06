@@ -26,22 +26,10 @@ public class PlaywrightResolucion : IAutomationResolucion
     {
         return await _session.RunAsync<ResPreparation?>(async page =>
         {
-            _logger.LogDebug("Navegando a Resoluciones para {NroExpediente}", nroExpediente);
-
-            await page.GotoAsync(ResURL);
-            await page.FillAsync("input[name='_TEXTOBUSQUEDA']", nroExpediente);
-            await page.ClickAsync("input[name='BUTTON1']");
-            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
-            var rowCountRaw = await page.InputValueAsync("input[name='nRC_Gridexp']");
-            if (!int.TryParse(rowCountRaw, out var rowCount) || rowCount == 0)
+            if (!await AbrirExpedienteAsync(page, nroExpediente))
             {
-                _logger.LogWarning("Expediente {NroExpediente} no encontrado en la cola de Resoluciones", nroExpediente);
                 return null;
             }
-
-            await page.ClickAsync("#_DISPLAY_0001");
-            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
             var expId = await page.InputValueAsync("input[name='W0035AV79ExpID_PARM']");
             var causante = await page.InputValueAsync("input[name='EXPCAUSANTE']");
@@ -50,6 +38,8 @@ public class PlaywrightResolucion : IAutomationResolucion
             int.TryParse(folioActualRaw?.Trim(), out var folioActual);
 
             _logger.LogDebug("Expediente {NroExpediente} localizado (ExpId {ExpId}, Folio actual {FolioActual})", nroExpediente, expId, folioActual);
+
+            await GeneXusGrid.EsperarFilasAsync(page, "W0035nRC_Gridresol", "W0035EXPRESNRORESCOMPLETO", _logger, "Gridresol");
 
             var resoluciones = new List<string?>();
             int i = 1;
@@ -88,10 +78,40 @@ public class PlaywrightResolucion : IAutomationResolucion
         });
     }
 
-    public async Task<bool> ConfirmarResAsync(string nroResolucion, DateTime fechaResolucion, string observacionesRes)
+    private async Task<bool> AbrirExpedienteAsync(IPage page, string nroExpediente)
+    {
+        _logger.LogDebug("Navegando a Resoluciones para {NroExpediente}", nroExpediente);
+
+        await page.GotoAsync(ResURL);
+        await page.FillAsync("input[name='_TEXTOBUSQUEDA']", nroExpediente);
+        await page.ClickAsync("input[name='BUTTON1']");
+        await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        var rowCountRaw = await page.InputValueAsync("input[name='nRC_Gridexp']");
+        if (!int.TryParse(rowCountRaw, out var rowCount) || rowCount == 0)
+        {
+            _logger.LogWarning("Expediente {NroExpediente} no encontrado en la cola de Resoluciones", nroExpediente);
+            return false;
+        }
+
+        await page.ClickAsync("#_DISPLAY_0001");
+        await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        return true;
+    }
+
+    public async Task<bool> ConfirmarResAsync(string nroExpediente, string nroResolucion, DateTime fechaResolucion, string observacionesRes)
     {
         return await _session.RunAsync(async page =>
         {
+            // Verificacion de seguridad por si la sesion cambio de pagina (reintento o keep-alive)
+            if (await page.Locator("input[name='BTN_RESOLUCION']").CountAsync() == 0)
+            {
+                if (!await AbrirExpedienteAsync(page, nroExpediente))
+                {
+                    return false;
+                }
+            }
+
             _logger.LogDebug("Abriendo formulario de carga de Resolucion para {NroResolucion}", nroResolucion);
 
             await page.ClickAsync("input[name='BTN_RESOLUCION']");

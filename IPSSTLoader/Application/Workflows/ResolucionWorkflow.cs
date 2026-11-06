@@ -87,6 +87,7 @@ public class ResolucionWorkflow
             try
             {
                 resolucionSuccess = await _automationResolucion.ConfirmarResAsync(
+                                                    expediente.NroExpediente,
                                                     expediente.Resolucion!.NroResolucion,
                                                     expediente.Resolucion.FechaResolucion,
                                                     expediente.Resolucion.Observaciones ?? string.Empty);
@@ -125,7 +126,9 @@ public class ResolucionWorkflow
             job.Status = UploadStatus.Failed;
             job.LastError = "Se Alcanzaron los Intentos Maximos de Resolucion";
             await _uploadJobRepository.UpdateAsync(job);
-            return;
+
+            // Se lanza para que la UI no informe la Resolucion como exitosa
+            throw new InvalidOperationException(job.LastError);
         }
 
         //Resolucion Exitosa
