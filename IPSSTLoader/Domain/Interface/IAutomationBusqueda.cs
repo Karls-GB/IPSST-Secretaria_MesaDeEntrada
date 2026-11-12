@@ -8,4 +8,5 @@ namespace IPSST.Domain.Interface;
 public interface IAutomationBusqueda
 {
     Task<ResultadoBusqueda?> SearchAsync(string nroExpediente);
+    Task<EstadoExpediente?> ConsultarEstadoAsync(string nroExpediente);
 }

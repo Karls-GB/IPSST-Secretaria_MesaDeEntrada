@@ -1,4 +1,5 @@
-﻿using IPSST.Domain.Entities;
+﻿using IPSST.Application.Configuration;
+using IPSST.Domain.Entities;
 using IPSST.Domain.Enums;
 using IPSST.Domain.Interface;
 using IPSST.Domain.Validation;
@@ -12,21 +13,88 @@ namespace IPSST.Application.Workflows;
 public class PaseWorkflow
 {
     private readonly IAutomationPase _automationPase;
+    private readonly IAutomationBusqueda _automationBusqueda;
     private readonly IUploadJobRepository _uploadJobRepository;
     private readonly ExpValidation _expValidation;
+    private readonly OficinaConfig _oficinaConfig;
 
     public PaseWorkflow(IAutomationPase automationPase,
+        IAutomationBusqueda automationBusqueda,
         IUploadJobRepository uploadJobRepository,
-        ExpValidation expValidation)
+        ExpValidation expValidation,
+        OficinaConfig oficinaConfig)
     {
         _automationPase = automationPase;
+        _automationBusqueda = automationBusqueda;
         _uploadJobRepository = uploadJobRepository;
         _expValidation = expValidation;
+        _oficinaConfig = oficinaConfig;
     }
 
+    // Devuelve null si el expediente no existe
     public async Task<PasePreparation?> PrepararAsync(string nroExpediente)
     {
-        return await _automationPase.PrepararPaseAsync(nroExpediente);
+        // Caso mas comun: el expediente esta en la cola de Pases. Se va directo, sin busqueda previa
+        var preparacion = await _automationPase.PrepararPaseAsync(nroExpediente);
+        if (preparacion != null)
+        {
+            return preparacion;
+        }
+
+        // No esta en la cola: busqueda rapida para saber donde esta
+        var estado = await _automationBusqueda.ConsultarEstadoAsync(nroExpediente);
+        if (estado == null)
+        {
+            return null;
+        }
+
+        if (estado.EstaEnOficina(_oficinaConfig.Nombre))
+        {
+            // En esta oficina y en transito: tiene un pase hecho desde aca, se puede cancelar y rehacer
+            if (estado.EnTransito)
+            {
+                return await PrepararPasePendienteAsync(nroExpediente, estado);
+            }
+
+            return new PasePreparation
+            {
+                MotivoNoDisponible = $"El expediente está en {_oficinaConfig.Nombre} ({estado.Descripcion}) pero no aparece en la cola de Pases."
+            };
+        }
+
+        // Otra oficina (o fuera de la institucion): se informa donde esta
+        return new PasePreparation { MotivoNoDisponible = estado.DescribirUbicacion() };
+    }
+
+    // El expediente esta en transito: solo se puede cancelar si sigue figurando en esta oficina
+    public async Task<PasePreparation> PrepararPasePendienteAsync(string nroExpediente, EstadoExpediente estado)
+    {
+        if (!estado.EstaEnOficina(_oficinaConfig.Nombre))
+        {
+            // No se carga la lista de Cancelacion (lenta): el pase no se puede cancelar desde aca
+            return new PasePreparation
+            {
+                MotivoNoDisponible = $"El expediente está {estado.Descripcion} desde {estado.Oficina}. " +
+                                     $"Solo se pueden cancelar pases de expedientes que están en {_oficinaConfig.Nombre}."
+            };
+        }
+
+        var pendiente = await _automationPase.PrepararCancelarPaseAsync(nroExpediente);
+        if (pendiente == null)
+        {
+            return new PasePreparation
+            {
+                MotivoNoDisponible = $"El expediente está {estado.Descripcion}, pero el pase no fue hecho desde esta oficina."
+            };
+        }
+
+        return new PasePreparation
+        {
+            Causante = pendiente.Causante,
+            FolioActual = pendiente.FoliosExpediente,
+            ExpId = pendiente.ExpId,
+            PasePendiente = pendiente
+        };
     }
 
     public void ValidateExp(string nroExpediente)

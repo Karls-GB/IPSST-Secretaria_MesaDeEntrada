@@ -62,7 +62,9 @@
                     <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,10">
                         <TextBlock Text="Nro. Expediente:" VerticalAlignment="Center" Width="120"/>
                         <TextBox x:Name="PaseNroExpedienteBox" Width="200" VerticalAlignment="Center"/>
-                    </StackPanel>                    
+                        <CheckBox x:Name="CancelarPaseCheckBox" Content="Cancelar pase" VerticalAlignment="Center" Margin="20,0,0,0"
+                                  Checked="CancelarPaseCheckBox_Changed" Unchecked="CancelarPaseCheckBox_Changed"/>
+                    </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="0,0,0,10">
                         <TextBlock Text="Oficina Destino:" VerticalAlignment="Center" Width="120"/>

@@ -13,5 +13,7 @@ public enum UploadStatus
     Completed,
     Failed,
     Retrying,
-    Cancelled
+    Cancelled,
+    // Va al final: el estado se guarda como numero en la base
+    CancelacionCompleted
 }

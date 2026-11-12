@@ -145,6 +145,13 @@ namespace IPSST
             string baseUrl = configuration.GetValue<string>("PlaywrightSettings:BaseUrl")!;
             string extentionUrl = configuration.GetValue<string>("PlaywrightSettings:ExtentionUrl")!;
 
+            var oficinaConfig = configuration.GetSection("Oficina").Get<OficinaConfig>();
+            if (string.IsNullOrWhiteSpace(oficinaConfig?.Nombre))
+            {
+                throw new InvalidOperationException("Falta 'Oficina:Nombre' en appsettings.json");
+            }
+            services.AddSingleton(oficinaConfig);
+
             var paseDefaults = configuration.GetSection("PaseDefaults").Get<Dictionary<string, PaseDefaultConfig>>()
                 ?? new Dictionary<string, PaseDefaultConfig>();
             services.AddSingleton(paseDefaults);
@@ -178,6 +185,7 @@ namespace IPSST
             services.AddScoped<RecepcionService>();
             services.AddScoped<PaseWorkflow>();
             services.AddScoped<ResolucionWorkflow>();
+            services.AddScoped<CancelarPaseWorkflow>();
             services.AddSingleton<OficinaCacheService>();
 
             //UI

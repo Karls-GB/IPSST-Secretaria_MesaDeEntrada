@@ -5,6 +5,7 @@ using IPSST.Views;
 using IPSST.Application.Workflows;
 using System.Collections.ObjectModel;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -22,6 +23,7 @@ public partial class MainWindow : Window
     private readonly RecepcionService _recepcionService;
     private readonly PaseWorkflow _paseWorkflow;
     private readonly ResolucionWorkflow _resolucionWorkflow;
+    private readonly CancelarPaseWorkflow _cancelarPaseWorkflow;
     private readonly OficinaCacheService _oficinaCacheService;
     private readonly Dictionary<string, PaseDefaultConfig> _paseDefaults;
     private readonly Dictionary<string, ResolucionDefaultConfig> _resolucionDefaults;
@@ -42,6 +44,7 @@ public partial class MainWindow : Window
         PaseWorkflow paseWorkflow, 
         RecepcionService recepcionService, 
         ResolucionWorkflow resolucionWorkflow,
+        CancelarPaseWorkflow cancelarPaseWorkflow,
         OficinaCacheService oficinaCacheService,
         Dictionary<string, PaseDefaultConfig> paseDefaults,
         Dictionary<string, ResolucionDefaultConfig> resolucionDefaults)
@@ -52,6 +55,7 @@ public partial class MainWindow : Window
         _recepcionService = recepcionService;
         _paseWorkflow = paseWorkflow;
         _resolucionWorkflow = resolucionWorkflow;
+        _cancelarPaseWorkflow = cancelarPaseWorkflow;
         _oficinaCacheService = oficinaCacheService;
         _paseDefaults = paseDefaults;
         _resolucionDefaults = resolucionDefaults;
@@ -293,8 +297,101 @@ public partial class MainWindow : Window
         PaseNroExpedienteBox.Clear();
     }
 
+    private void CancelarPaseCheckBox_Changed(object sender, RoutedEventArgs e)
+    {
+        // Para cancelar solo hace falta el numero de expediente
+        var cancelar = CancelarPaseCheckBox.IsChecked == true;
+        OficinaTextBox.IsEnabled = !cancelar;
+        FoliosNuevosBox.IsEnabled = !cancelar;
+        FoliosTotalBox.IsEnabled = !cancelar;
+        ObservacionesPaseBox.IsEnabled = !cancelar;
+    }
+
+    private static bool MismaOficina(string a, string b)
+    {
+        static string Normalizar(string s) => Regex.Replace(s.Trim(), @"\s+", " ");
+        return string.Equals(Normalizar(a), Normalizar(b), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task CancelarPaseAsync()
+    {
+        var nro = PaseNroExpedienteBox.Text.Trim();
+
+        if (string.IsNullOrWhiteSpace(nro))
+        {
+            MessageBox.Show("Nro de Expediente requerido.");
+            return;
+        }
+
+        try
+        {
+            _paseWorkflow.ValidateExp(nro);
+        }
+        catch (ArgumentException ex)
+        {
+            MessageBox.Show(ex.Message);
+            return;
+        }
+
+        ConfirmarPaseButton.IsEnabled = false;
+
+        PasePreparation? preparacion;
+        try
+        {
+            preparacion = await _cancelarPaseWorkflow.PrepararAsync(nro);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error al buscar el expediente: {ex.Message}");
+            ConfirmarPaseButton.IsEnabled = true;
+            return;
+        }
+
+        ConfirmarPaseButton.IsEnabled = true;
+
+        if (preparacion == null)
+        {
+            MessageBox.Show("Expediente no encontrado.");
+            return;
+        }
+
+        if (preparacion.PasePendiente is not PasePendiente pendiente)
+        {
+            MessageBox.Show(preparacion.MotivoNoDisponible ?? "El expediente no tiene un pase pendiente desde esta oficina.");
+            return;
+        }
+
+        var respuesta = MessageBox.Show(
+            $"¿Cancelar el pase del expediente {pendiente.NroExpediente} hacia {pendiente.OficinaDestino} con {pendiente.FoliosPase} folios?",
+            "Cancelar pase", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+        if (respuesta != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        LimpiarFormularioPase();
+        CancelarPaseCheckBox.IsChecked = false;
+
+        try
+        {
+            await _cancelarPaseWorkflow.CancelarAsync(nro, pendiente.ExpId);
+            await MostrarToastAsync($"Pase del Expediente {pendiente.NroExpediente} cancelado con exito.", esError: false);
+        }
+        catch (Exception ex)
+        {
+            await MostrarToastAsync($"Error al cancelar el Pase del Expediente {pendiente.NroExpediente}: {ex.Message}", esError: true);
+        }
+    }
+
     private async void ConfirmarPaseButton_Click(object sender, RoutedEventArgs e)
     {
+        if (CancelarPaseCheckBox.IsChecked == true)
+        {
+            await CancelarPaseAsync();
+            return;
+        }
+
         // Validar antes de hacer cualquier busqueda, para fallar rapido si falta algo
         if (string.IsNullOrWhiteSpace(PaseNroExpedienteBox.Text) ||
             (string.IsNullOrWhiteSpace(FoliosTotalBox.Text) && string.IsNullOrWhiteSpace(FoliosNuevosBox.Text)) ||
@@ -338,7 +435,15 @@ public partial class MainWindow : Window
 
         if (result == null)
         {
-            MessageBox.Show("Expediente no encontrado en la cola de Pases.");
+            MessageBox.Show("Expediente no encontrado.");
+            ConfirmarPaseButton.IsEnabled = true;
+            return;
+        }
+
+        // Existe pero no se puede hacer el pase desde aca: el mensaje indica donde esta
+        if (result.MotivoNoDisponible is string motivo)
+        {
+            MessageBox.Show(motivo);
             ConfirmarPaseButton.IsEnabled = true;
             return;
         }
@@ -371,6 +476,55 @@ public partial class MainWindow : Window
             totalFolios = result.FolioActual + nuevos;
         }
 
+        var expediente = new Expediente
+        {
+            NroExpediente = PaseNroExpedienteBox.Text,
+            ExpedienteIdWeb = result.ExpId,
+            Pase = new PaseData
+            {
+                OficinaDestino = oficinaSeleccionada.Nombre,
+                Folios = totalFolios,
+                Observaciones = ObservacionesPaseBox.Text
+            }
+        };
+
+        // Ya tiene un pase hecho desde esta oficina: se ofrece cancelarlo y hacer el pase corregido
+        if (result.PasePendiente is PasePendiente pendiente)
+        {
+            ConfirmarPaseButton.IsEnabled = true;
+
+            if (MismaOficina(pendiente.OficinaDestino, oficinaSeleccionada.Nombre))
+            {
+                MessageBox.Show($"El expediente ya tiene un pase hacia esa oficina con {pendiente.FoliosPase} folios.");
+                return;
+            }
+
+            var respuesta = MessageBox.Show(
+                $"El expediente {pendiente.NroExpediente} ya tiene un pase hacia {pendiente.OficinaDestino} con {pendiente.FoliosPase} folios.\n\n" +
+                $"¿Cancelar ese pase y enviarlo a {oficinaSeleccionada.Nombre} con {totalFolios} folios?\n\n" +
+                $"Observaciones: {ObservacionesPaseBox.Text}",
+                "Corregir pase", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            if (respuesta != MessageBoxResult.Yes)
+            {
+                return;
+            }
+
+            LimpiarFormularioPase();
+
+            try
+            {
+                await _cancelarPaseWorkflow.CancelarYRehacerAsync(expediente, pendiente.ExpId);
+                await MostrarToastAsync($"Pase del Expediente {expediente.NroExpediente} corregido: enviado a {oficinaSeleccionada.Nombre}.", esError: false);
+            }
+            catch (Exception ex)
+            {
+                await MostrarToastAsync($"Error al corregir el Pase del Expediente {expediente.NroExpediente}: {ex.Message}", esError: true);
+            }
+
+            return;
+        }
+
         var confirmWindow = new ConfirmarPaseWindow(
             PaseNroExpedienteBox.Text,
             result.Causante,
@@ -385,18 +539,6 @@ public partial class MainWindow : Window
         }
 
         ConfirmarPaseButton.IsEnabled = true;
-
-        var expediente = new Expediente
-        {
-            NroExpediente = PaseNroExpedienteBox.Text,
-            ExpedienteIdWeb = result.ExpId,
-            Pase = new PaseData
-            {
-                OficinaDestino = oficinaSeleccionada.Nombre,
-                Folios = totalFolios,
-                Observaciones = ObservacionesPaseBox.Text
-            }
-        };
 
         LimpiarFormularioPase();
 

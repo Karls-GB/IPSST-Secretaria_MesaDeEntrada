@@ -27,34 +27,13 @@ public class PlaywrightBusqueda : IAutomationBusqueda
     {
         return await _session.RunAsync(async page =>
         {
-            _logger.LogDebug("Navegando para buscar expediente: {NroExpediente}", nroExpediente);
-
-            await page.GotoAsync(SearchUrl);
-
-            await page.FillAsync("input[name='W0007_TEXTOBUSQUEDA']", nroExpediente);
-            await page.ClickAsync("input[name='W0007BUTTON1']");
-
-            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
-            //Ver Cantidad de Resultados
-            var rowCountRaw = await page.InputValueAsync("input[name='W0007nRC_Gridexp']");
-            if (!int.TryParse(rowCountRaw?.Trim(), out var rowCount) || rowCount == 0)
+            var encontrado = await BuscarYAbrirAsync(page, nroExpediente);
+            if (encontrado is null)
             {
-                _logger.LogInformation("No se encontraron resultados para el expediente: {NroExpediente}", nroExpediente);
                 return null;
             }
 
-            //TODO: Agregar funcionalidad para mas de un resultado.
-            //Se hara cuando la opcion de ingresar dni o nombre este disponible
-
-            await GeneXusGrid.EsperarFilasAsync(page, "W0007nRC_Gridexp", "W0007_EXPID", _logger, "Gridexp (Busqueda)");
-
-            var expId = await GeneXusGrid.LeerCampoAsync(page, "W0007_EXPID", 1)
-                ?? throw new InvalidOperationException("La tabla de resultados no termino de cargar. Intente nuevamente");
-            var cuitCuil = await GeneXusGrid.LeerCampoAsync(page, "W0007_EXPCUITCUIL", 1);
-
-            await page.ClickAsync("#W0007_DISPLAY_0001");
-            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            var (expId, cuitCuil) = encontrado.Value;
 
             var nroExpedienteRaw = await page.InputValueAsync("input[name='EXPNOMBRENUEVO']");
             var fechaAltaRaw = await page.InputValueAsync("input[name='EXPFECHAALTA']");
@@ -121,10 +100,75 @@ public class PlaywrightBusqueda : IAutomationBusqueda
         });
     }
 
+    // Busqueda rapida: solo el estado y la ubicacion, sin observaciones ni "trabajado por"
+    public async Task<EstadoExpediente?> ConsultarEstadoAsync(string nroExpediente)
+    {
+        return await _session.RunAsync<EstadoExpediente?>(async page =>
+        {
+            if (await BuscarYAbrirAsync(page, nroExpediente) is null)
+            {
+                return null;
+            }
+
+            var estado = new EstadoExpediente
+            {
+                Estado = await LeerCampoAsync(page, "EXPESTADODESCRIPCION") ?? string.Empty,
+                OficinaDestino = await LeerCampoAsync(page, "W0050_OFICINADESTINONOMBRECOMPLETO") ?? string.Empty,
+                Oficina = await LeerCampoAsync(page, "W0050_EXPOFINOMBRE") ?? string.Empty
+            };
+
+            _logger.LogInformation("Estado de {NroExpediente}: {Descripcion}", nroExpediente, estado.Descripcion);
+            return estado;
+        });
+    }
+
+    // Busca el expediente y abre su pagina. Devuelve null si no hay resultados
+    private async Task<(string ExpId, string? CuitCuil)?> BuscarYAbrirAsync(IPage page, string nroExpediente)
+    {
+        _logger.LogDebug("Navegando para buscar expediente: {NroExpediente}", nroExpediente);
+
+        await page.GotoAsync(SearchUrl);
+
+        await page.FillAsync("input[name='W0007_TEXTOBUSQUEDA']", nroExpediente);
+        await page.ClickAsync("input[name='W0007BUTTON1']");
+
+        await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        //Ver Cantidad de Resultados
+        var rowCount = await GeneXusGrid.LeerCantidadAsync(page, "W0007nRC_Gridexp");
+        if (rowCount == 0)
+        {
+            _logger.LogInformation("No se encontraron resultados para el expediente: {NroExpediente}", nroExpediente);
+            return null;
+        }
+
+        //TODO: Agregar funcionalidad para mas de un resultado.
+        //Se hara cuando la opcion de ingresar dni o nombre este disponible
+
+        await GeneXusGrid.EsperarFilasAsync(page, "W0007nRC_Gridexp", "W0007_EXPID", _logger, "Gridexp (Busqueda)");
+
+        var expId = await GeneXusGrid.LeerCampoAsync(page, "W0007_EXPID", 1)
+            ?? throw new InvalidOperationException("La tabla de resultados no termino de cargar. Intente nuevamente");
+        var cuitCuil = await GeneXusGrid.LeerCampoAsync(page, "W0007_EXPCUITCUIL", 1);
+
+        await page.ClickAsync("#W0007_DISPLAY_0001");
+        await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        return (expId, cuitCuil);
+    }
+
+    // Lee un campo que no es de tabla sin esperar el timeout. Devuelve null si no existe
+    private static async Task<string?> LeerCampoAsync(IPage page, string nombre)
+    {
+        var locator = page.Locator($"input[name='{nombre}']");
+        return await locator.CountAsync() > 0 ? await locator.InputValueAsync() : null;
+    }
+
     private async Task<string?> ObtenerTrabajadoPorAsync(IPage page, string nroExpediente)
     {
         // Navega a la cola de Pases solo si no se esta ya en ella
-        if (!page.Url.Contains($"hviewexppases.{_session.ExtentionUrl}", StringComparison.OrdinalIgnoreCase))
+        // Se incluye "?Pases": la lista de Cancelacion usa la misma pagina con "?CancelPases"
+        if (!page.Url.Contains($"hviewexppases.{_session.ExtentionUrl}?Pases", StringComparison.OrdinalIgnoreCase))
         {
             await page.GotoAsync(PaseUrl);
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
