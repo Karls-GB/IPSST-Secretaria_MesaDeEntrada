@@ -123,7 +123,12 @@ public class PlaywrightBusqueda : IAutomationBusqueda
 
     private async Task<string?> ObtenerTrabajadoPorAsync(IPage page, string nroExpediente)
     {
-        await page.GotoAsync(PaseUrl);
+        // Navega a la cola de Pases solo si no se esta ya en ella
+        if (!page.Url.Contains($"hviewexppases.{_session.ExtentionUrl}", StringComparison.OrdinalIgnoreCase))
+        {
+            await page.GotoAsync(PaseUrl);
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        }
 
         await page.FillAsync("input[name='W0009_TEXTOBUSQUEDA']", nroExpediente);
         await page.ClickAsync("input[name='W0009BUTTON2']");
