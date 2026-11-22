@@ -43,4 +43,17 @@ public class UploadJobRepository : IUploadJobRepository
         await using var context = await _contextFactory.CreateDbContextAsync();
         return await context.UploadJobs.FindAsync(id);
     }
+
+    public async Task<List<UploadJob>> GetHistorialAsync(DateTime? desdeUtc, IReadOnlyCollection<TipoAccion> tipos)
+    {
+        await using var context = await _contextFactory.CreateDbContextAsync();
+        var query = context.UploadJobs.AsNoTracking().Where(j => tipos.Contains(j.TipoAccion));
+
+        if (desdeUtc != null)
+        {
+            query = query.Where(j => j.CreatedAt >= desdeUtc);
+        }
+
+        return await query.OrderByDescending(j => j.CreatedAt).ToListAsync();
+    }
 }

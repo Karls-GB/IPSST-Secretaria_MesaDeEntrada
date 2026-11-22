@@ -28,8 +28,9 @@ public partial class MainWindow : Window
     private readonly Dictionary<string, PaseDefaultConfig> _paseDefaults;
     private readonly Dictionary<string, ResolucionDefaultConfig> _resolucionDefaults;
 
+    private readonly HistorialService _historialService;
+
     private ResultadoBusquedaWindow? _resultadoBusquedaWindow;
-    private readonly ObservableCollection<HistorialItem> _historial = new();
 
     private List<RecepcionItem> _recepcionEncontrados = new();
 
@@ -46,6 +47,7 @@ public partial class MainWindow : Window
         ResolucionWorkflow resolucionWorkflow,
         CancelarPaseWorkflow cancelarPaseWorkflow,
         OficinaCacheService oficinaCacheService,
+        HistorialService historialService,
         Dictionary<string, PaseDefaultConfig> paseDefaults,
         Dictionary<string, ResolucionDefaultConfig> resolucionDefaults)
     {
@@ -60,8 +62,7 @@ public partial class MainWindow : Window
         _oficinaCacheService = oficinaCacheService;
         _paseDefaults = paseDefaults;
         _resolucionDefaults = resolucionDefaults;
-
-        HistorialListBox.ItemsSource = _historial;
+        _historialService = historialService;
     }
 
     //Busqueda
@@ -69,15 +70,6 @@ public partial class MainWindow : Window
     private async void BuscarButton_Click(object sender, RoutedEventArgs e)
     {
         await EjecutarBusquedaAsync(NroExpedienteBox.Text);
-    }
-
-    private async void HistorialListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-    {
-        if (HistorialListBox.SelectedItem is HistorialItem item)
-        {
-            NroExpedienteBox.Text = item.NroExpediente;
-            await EjecutarBusquedaAsync(item.NroExpediente);
-        }
     }
 
     public async Task EjecutarBusquedaAsync(string nroExpediente)
@@ -95,7 +87,7 @@ public partial class MainWindow : Window
                 return;
             }
 
-            AgregarAlHistorial(result.NroExpediente, result.Causante);
+            _historialService.RegistrarBusqueda(result);
 
             if (_resultadoBusquedaWindow == null)
             {
@@ -126,7 +118,7 @@ public partial class MainWindow : Window
 
         if (observacionesFaltantes > 0)
         {
-            await MostrarToastAsync($"{observacionesFaltantes} observaciones no terminaron de cargar. Vuelva a buscar para verlas.", esError: true);
+            await BusquedaMostrarToastAsync($"{observacionesFaltantes} observaciones no terminaron de cargar. Vuelva a buscar para verlas.", esError: true);
         }
     }
 
@@ -138,24 +130,51 @@ public partial class MainWindow : Window
         NroExpedienteBox.IsEnabled = !buscando;
     }
 
-    private void AgregarAlHistorial(string nroExpediente, string? causante)
-    {
-        var existente = _historial.FirstOrDefault(h => h.NroExpediente == nroExpediente);
-        if(existente != null)
-        {
-            _historial.Remove(existente);
-        }
+    //Historial
 
-        _historial.Insert(0, new HistorialItem { NroExpediente = nroExpediente, Causante = causante });
+    private const int HistorialTabIndex = 4;
+
+    private async Task CargarHistorialAsync()
+    {
+        var accion = (FiltroAccion)Math.Max(0, HistorialAccionCombo.SelectedIndex);
+        var fecha = (FiltroFecha)Math.Max(0, HistorialFechaCombo.SelectedIndex);
+
+        HistBuscarColumn.Visibility = accion == FiltroAccion.Busqueda ? Visibility.Visible : Visibility.Collapsed;
+
+        try
+        {
+            var entradas = await _historialService.ObtenerAsync(accion, fecha);
+            HistorialGrid.ItemsSource = entradas;
+            HistorialCantidadText.Text = $"{entradas.Count} registros";
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error al cargar el historial: {ex.Message}");
+        }
     }
 
-    private class HistorialItem
+    private async void HistorialFiltro_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        public string NroExpediente { get; set; } = string.Empty;
-        public string? Causante { get; set; }
+        // Evita cargar durante InitializeComponent (los controles todavia no existen)
+        if (IsLoaded)
+        {
+            await CargarHistorialAsync();
+        }
+    }
 
-        public override string ToString() =>
-            string.IsNullOrWhiteSpace(Causante) ? NroExpediente : $"{NroExpediente} - {Causante}";
+    private async void HistorialActualizarButton_Click(object sender, RoutedEventArgs e)
+    {
+        await CargarHistorialAsync();
+    }
+
+    private async void HistorialBuscarDeNuevo_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is HistorialEntry entrada)
+        {
+            NroExpedienteBox.Text = entrada.NroExpediente;
+            await EjecutarBusquedaAsync(entrada.NroExpediente);
+            await CargarHistorialAsync();
+        }
     }
 
     //Pase
@@ -389,12 +408,12 @@ public partial class MainWindow : Window
 
         try
         {
-            await _cancelarPaseWorkflow.CancelarAsync(nro, pendiente.ExpId);
-            await MostrarToastAsync($"Pase del Expediente {pendiente.NroExpediente} cancelado con exito.", esError: false);
+            await _cancelarPaseWorkflow.CancelarAsync(nro, pendiente.ExpId, pendiente.OficinaDestino, pendiente.Causante);
+            await PaseMostrarToastAsync($"Pase del Expediente {pendiente.NroExpediente} cancelado con exito.", esError: false);
         }
         catch (Exception ex)
         {
-            await MostrarToastAsync($"Error al cancelar el Pase del Expediente {pendiente.NroExpediente}: {ex.Message}", esError: true);
+            await PaseMostrarToastAsync($"Error al cancelar el Pase del Expediente {pendiente.NroExpediente}: {ex.Message}", esError: true);
         }
     }
 
@@ -493,6 +512,7 @@ public partial class MainWindow : Window
         var expediente = new Expediente
         {
             NroExpediente = PaseNroExpedienteBox.Text,
+            Causante = result.Causante,
             ExpedienteIdWeb = result.ExpId,
             Pase = new PaseData
             {
@@ -528,12 +548,12 @@ public partial class MainWindow : Window
 
             try
             {
-                await _cancelarPaseWorkflow.CancelarYRehacerAsync(expediente, pendiente.ExpId);
-                await MostrarToastAsync($"Pase del Expediente {expediente.NroExpediente} corregido: enviado a {oficinaSeleccionada.Nombre}.", esError: false);
+                await _cancelarPaseWorkflow.CancelarYRehacerAsync(expediente, pendiente.ExpId, pendiente.OficinaDestino);
+                await PaseMostrarToastAsync($"Pase del Expediente {expediente.NroExpediente} corregido: enviado a {oficinaSeleccionada.Nombre}.", esError: false);
             }
             catch (Exception ex)
             {
-                await MostrarToastAsync($"Error al corregir el Pase del Expediente {expediente.NroExpediente}: {ex.Message}", esError: true);
+                await PaseMostrarToastAsync($"Error al corregir el Pase del Expediente {expediente.NroExpediente}: {ex.Message}", esError: true);
             }
 
             return;
@@ -559,25 +579,14 @@ public partial class MainWindow : Window
         try
         {
             await _paseWorkflow.ExecuteAsync(expediente, result.ExpId ?? string.Empty);
-            await MostrarToastAsync($"Pase del Expediente {expediente.NroExpediente} realizado con exito.", esError: false);
+            await PaseMostrarToastAsync($"Pase del Expediente {expediente.NroExpediente} realizado con exito.", esError: false);
         }
         catch (Exception ex)
         {
-            await MostrarToastAsync($"Error al realizar el Pase del Expediente {expediente.NroExpediente}: {ex.Message}", esError: true);
+            await PaseMostrarToastAsync($"Error al realizar el Pase del Expediente {expediente.NroExpediente}: {ex.Message}", esError: true);
         }
     }
 
-    private async Task MostrarToastAsync(string mensaje, bool esError)
-    {
-        ToastBorder.Background = esError ? new SolidColorBrush(Color.FromRgb(0xC0, 0x39, 0x2B))
-                                          : new SolidColorBrush(Color.FromRgb(0x2E, 0x8B, 0x57));
-        ToastText.Text = mensaje;
-        ToastBorder.Visibility = Visibility.Visible;
-
-        await Task.Delay(5000);
-
-        ToastBorder.Visibility = Visibility.Collapsed;
-    }
 
     //Resolucion
 
@@ -839,6 +848,7 @@ public partial class MainWindow : Window
         var expediente = new Expediente
         {
             NroExpediente = ResolucionNroExpedienteBox.Text,
+            Causante = result.Causante,
             Pase = new PaseData
             {
                 OficinaDestino = oficinaSeleccionada.Nombre,
@@ -866,16 +876,98 @@ public partial class MainWindow : Window
         }
     }
 
-    private async Task ResolucionMostrarToastAsync(string mensaje, bool esError)
+    //Avisos: uno por pestaña, visible solo en la pestaña donde se origino
+
+    private const int BusquedaTabIndex = 0;
+    private const int PaseTabIndex = 1;
+    private const int ResolucionTabIndex = 2;
+    private const int RecepcionTabIndex = 3;
+
+    private sealed class Aviso
     {
-        ToastBorder.Background = esError ? new SolidColorBrush(Color.FromRgb(0xC0, 0x39, 0x2B))
-                                          : new SolidColorBrush(Color.FromRgb(0x2E, 0x8B, 0x57));
-        ToastText.Text = mensaje;
-        ToastBorder.Visibility = Visibility.Visible;
+        public required Border Borde { get; init; }
+        public required TextBlock Texto { get; init; }
+
+        // Cambia con cada mensaje: un aviso temporal viejo no oculta uno nuevo
+        public int Version { get; set; }
+    }
+
+    private readonly Dictionary<int, Aviso> _avisos = new();
+
+    // Pase y Resolucion: fijo hasta la siguiente accion, asi queda a la vista el ultimo resultado
+    private Task PaseMostrarToastAsync(string mensaje, bool esError) => MostrarAvisoAsync(PaseTabIndex, mensaje, esError, fijo: true);
+    private Task ResolucionMostrarToastAsync(string mensaje, bool esError) => MostrarAvisoAsync(ResolucionTabIndex, mensaje, esError, fijo: true);
+
+    // Busqueda y Recepcion: temporal (5 s)
+    private Task BusquedaMostrarToastAsync(string mensaje, bool esError) => MostrarAvisoAsync(BusquedaTabIndex, mensaje, esError, fijo: false);
+    private Task RecepcionMostrarToastAsync(string mensaje, bool esError) => MostrarAvisoAsync(RecepcionTabIndex, mensaje, esError, fijo: false);
+
+    private async Task MostrarAvisoAsync(int tab, string mensaje, bool esError, bool fijo)
+    {
+        var aviso = ObtenerAviso(tab);
+        aviso.Borde.Background = esError ? new SolidColorBrush(Color.FromRgb(0xC0, 0x39, 0x2B))
+                                         : new SolidColorBrush(Color.FromRgb(0x2E, 0x8B, 0x57));
+        aviso.Texto.Text = fijo ? $"{DateTime.Now:HH:mm}  {mensaje}" : mensaje;
+        int version = ++aviso.Version;
+        ActualizarAvisos();
+
+        if (fijo)
+        {
+            return;
+        }
 
         await Task.Delay(5000);
 
-        ToastBorder.Visibility = Visibility.Collapsed;
+        if (aviso.Version == version)
+        {
+            aviso.Texto.Text = string.Empty;
+            ActualizarAvisos();
+        }
+    }
+
+    private Aviso ObtenerAviso(int tab)
+    {
+        if (_avisos.TryGetValue(tab, out var existente))
+        {
+            return existente;
+        }
+
+        var texto = new TextBlock { Foreground = Brushes.White, TextWrapping = TextWrapping.Wrap, FontSize = 13 };
+        var borde = new Border
+        {
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Bottom,
+            Margin = new Thickness(0, 0, 20, 20),
+            Padding = new Thickness(15, 10, 15, 10),
+            CornerRadius = new CornerRadius(6),
+            MaxWidth = 350,
+            Visibility = Visibility.Collapsed,
+            ToolTip = "Click para ocultar",
+            Cursor = Cursors.Hand,
+            Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 10, ShadowDepth = 2, Opacity = 0.4 },
+            Child = texto
+        };
+
+        var aviso = new Aviso { Borde = borde, Texto = texto };
+        borde.MouseLeftButtonUp += (s, e) =>
+        {
+            aviso.Version++;
+            texto.Text = string.Empty;
+            ActualizarAvisos();
+        };
+
+        RootGrid.Children.Add(borde);
+        _avisos[tab] = aviso;
+        return aviso;
+    }
+
+    private void ActualizarAvisos()
+    {
+        foreach (var (tab, aviso) in _avisos)
+        {
+            aviso.Borde.Visibility = MainTabControl.SelectedIndex == tab && aviso.Texto.Text.Length > 0
+                ? Visibility.Visible : Visibility.Collapsed;
+        }
     }
 
     //Recepcion
@@ -1047,16 +1139,16 @@ public partial class MainWindow : Window
 
             if (admitido)
             {
-                await MostrarToastAsync($"Expediente {nro} recibido con exito.", esError: false);
+                await RecepcionMostrarToastAsync($"Expediente {nro} recibido con exito.", esError: false);
             }
             else
             {
-                await MostrarToastAsync($"No se pudo recibir el expediente {nro}.", esError: true);
+                await RecepcionMostrarToastAsync($"No se pudo recibir el expediente {nro}.", esError: true);
             }
         }
         catch (Exception ex)
         {
-            await MostrarToastAsync($"Error al recibir {nro}: {ex.Message}", esError: true);
+            await RecepcionMostrarToastAsync($"Error al recibir {nro}: {ex.Message}", esError: true);
         }
     }
     private void setRecibiendoState(bool buscando)
@@ -1149,7 +1241,7 @@ public partial class MainWindow : Window
             RecepOficinaGrid.ItemsSource = null;
             setRecepButtonEnabled(true);
 
-            await MostrarToastAsync(
+            await RecepcionMostrarToastAsync(
                 $"Recibidos: {result.Admitted.Count} de {nrosSeleccionados.Count}." +
                 (result.NotFound.Count > 0 ? $" No encontrados: {result.NotFound.Count}." : "") +
                 (result.Failed.Count > 0 ? $" Fallidos: {result.Failed.Count}." : ""),
@@ -1192,8 +1284,15 @@ public partial class MainWindow : Window
                 MainTabControl.SelectedIndex = 3;
                 e.Handled = true;
                 break;
+            case Key.F5:
+                MainTabControl.SelectedIndex = HistorialTabIndex;
+                HistorialAccionCombo.Focus();
+                e.Handled = true;
+                break;
             case Key.Enter:
-                if(!OficinaPopup.IsOpen && !ResolucionOficinaPopup.IsOpen && !RecepOficinaPopup.IsOpen){
+                // Solo se consume el Enter en pestañas que lo usan: en Historial queda para el control con foco
+                if(!OficinaPopup.IsOpen && !ResolucionOficinaPopup.IsOpen && !RecepOficinaPopup.IsOpen
+                    && MainTabControl.SelectedIndex != HistorialTabIndex){
                     HandleEnterShortcut();
                     e.Handled = true;
                 }
@@ -1201,6 +1300,7 @@ public partial class MainWindow : Window
         }
     }
 
+    // Cada pestaña usa el Enter a su manera, segun la pestaña seleccionada
     private void HandleEnterShortcut()
     {
         switch (MainTabControl.SelectedIndex)
@@ -1241,9 +1341,20 @@ public partial class MainWindow : Window
         }
     }
 
-    private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private async void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        // SelectionChanged tambien llega desde ComboBox/DataGrid internos: solo interesa el cambio de pestaña
+        if (e.Source != MainTabControl || !IsLoaded)
+        {
+            return;
+        }
 
+        ActualizarAvisos();
+
+        if (MainTabControl.SelectedIndex == HistorialTabIndex)
+        {
+            await CargarHistorialAsync();
+        }
     }
 
     

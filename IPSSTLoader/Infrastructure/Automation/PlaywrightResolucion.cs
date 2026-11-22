@@ -163,12 +163,12 @@ public class PlaywrightResolucion : IAutomationResolucion
             var resExitoso = page.Url.Contains($"hviewexpedientesresolucion.{_session.ExtentionUrl}", StringComparison.OrdinalIgnoreCase);
             if (resExitoso)
             {
-                _logger.LogInformation("Resolucion cargada para {nroResolucion}", nroResolucion);
+                _logger.LogInformation("Resolucion {NroResolucion} cargada en {NroExpediente}", nroResolucion, nroExpediente);
                 return true;
             }
             else
             {
-                _logger.LogError("No se pudo cargar la resolucion para {nroResolucion}", nroResolucion);
+                _logger.LogWarning("No se pudo confirmar la Resolucion {NroResolucion} en {NroExpediente}", nroResolucion, nroExpediente);
                 return false;
             }
             

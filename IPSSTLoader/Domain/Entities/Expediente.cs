@@ -8,6 +8,7 @@ public class Expediente
 {
     public Guid Id { get; set; }
     public string NroExpediente { get; set; } = string.Empty;
+    public string? Causante { get; set; }
     public string? ExpedienteIdWeb { get; set; }
     public ResolucionData? Resolucion { get; set; }
     public PaseData? Pase {  get; set; }

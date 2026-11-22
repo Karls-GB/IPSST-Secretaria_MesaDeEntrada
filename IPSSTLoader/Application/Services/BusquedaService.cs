@@ -27,12 +27,37 @@ public class BusquedaService
 
     public async Task<(List<ObservacionItem> Observaciones, int Faltantes)> ObtenerTodasObservacionesAsync(string nroExpediente)
     {
-        return await _automationBusqueda.ObtenerTodasObservacionesAsync(nroExpediente);
+        _logger.LogInformation("Cargando todas las observaciones de {NroExpediente}", nroExpediente);
+
+        try
+        {
+            var resultado = await _automationBusqueda.ObtenerTodasObservacionesAsync(nroExpediente);
+
+            if (resultado.Faltantes > 0)
+            {
+                _logger.LogWarning("Observaciones de {NroExpediente}: {Faltantes} no terminaron de cargar", nroExpediente, resultado.Faltantes);
+            }
+
+            return resultado;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al cargar todas las observaciones de {NroExpediente}", nroExpediente);
+            throw;
+        }
     }
 
     public async Task<string?> ObtenerTrabajadoPorAsync(string nroExpediente)
     {
-        return await _automationBusqueda.ObtenerTrabajadoPorAsync(nroExpediente);
+        try
+        {
+            return await _automationBusqueda.ObtenerTrabajadoPorAsync(nroExpediente);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al consultar 'Trabajado por' de {NroExpediente}", nroExpediente);
+            throw;
+        }
     }
 
     // "Trabajado por" sale de la cola de Pases: solo aplica si esta en la oficina del usuario y no en transito

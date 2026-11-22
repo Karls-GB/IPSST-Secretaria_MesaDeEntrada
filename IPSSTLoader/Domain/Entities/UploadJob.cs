@@ -11,6 +11,13 @@ public class UploadJob
     public Guid ExpedienteId { get; set; }
     public Guid? SuperseededByJobId { get; set; }
     public string NroExpediente { get; set; } = string.Empty;
+    public TipoAccion TipoAccion { get; set; }
+
+    // Solo para mostrar en el Historial
+    public string? Causante { get; set; }
+
+    // Correccion de pase: oficina a la que iba el pase cancelado
+    public string? OficinaAnterior { get; set; }
     public UploadStatus Status { get; set; } = UploadStatus.Pending;
     public int RetryCount { get; set; }
     public string? LastError { get; set; }

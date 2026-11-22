@@ -4,6 +4,7 @@ using IPSST.Domain.Exceptions;
 using IPSST.Domain.Enums;
 using IPSST.Domain.Interface;
 using IPSST.Domain.Validation;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -18,22 +19,56 @@ public class PaseWorkflow
     private readonly IUploadJobRepository _uploadJobRepository;
     private readonly ExpValidation _expValidation;
     private readonly OficinaConfig _oficinaConfig;
+    private readonly ILogger<PaseWorkflow> _logger;
 
     public PaseWorkflow(IAutomationPase automationPase,
         IAutomationBusqueda automationBusqueda,
         IUploadJobRepository uploadJobRepository,
         ExpValidation expValidation,
-        OficinaConfig oficinaConfig)
+        OficinaConfig oficinaConfig,
+        ILogger<PaseWorkflow> logger)
     {
         _automationPase = automationPase;
         _automationBusqueda = automationBusqueda;
         _uploadJobRepository = uploadJobRepository;
         _expValidation = expValidation;
         _oficinaConfig = oficinaConfig;
+        _logger = logger;
     }
 
     // Devuelve null si el expediente no existe
     public async Task<PasePreparation?> PrepararAsync(string nroExpediente)
+    {
+        _logger.LogInformation("Preparando Pase de {NroExpediente}", nroExpediente);
+
+        try
+        {
+            var preparacion = await PrepararInternoAsync(nroExpediente);
+
+            if (preparacion == null)
+            {
+                _logger.LogWarning("Pase: expediente {NroExpediente} no encontrado", nroExpediente);
+            }
+            else if (preparacion.MotivoNoDisponible != null)
+            {
+                _logger.LogWarning("Pase de {NroExpediente} no disponible: {Motivo}", nroExpediente, preparacion.MotivoNoDisponible);
+            }
+            else if (preparacion.PasePendiente != null)
+            {
+                _logger.LogInformation("Pase de {NroExpediente}: tiene un pase pendiente hacia {OficinaDestino}, se ofrece corregirlo",
+                    nroExpediente, preparacion.PasePendiente.OficinaDestino);
+            }
+
+            return preparacion;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al preparar el Pase de {NroExpediente}", nroExpediente);
+            throw;
+        }
+    }
+
+    private async Task<PasePreparation?> PrepararInternoAsync(string nroExpediente)
     {
         // Caso mas comun: el expediente esta en la cola de Pases. Se va directo, sin busqueda previa
         var preparacion = await _automationPase.PrepararPaseAsync(nroExpediente);
@@ -121,8 +156,12 @@ public class PaseWorkflow
         var validationResult = _expValidation.Validate(expediente, ExpValidationContext.Pase);
         if (!validationResult.IsValid)
         {
+            _logger.LogWarning("Validacion fallida para el Pase de {NroExpediente}: {Errores}", expediente.NroExpediente, string.Join(", ", validationResult.Errors));
             throw new ArgumentException(string.Join(", ", validationResult.Errors));
         }
+
+        _logger.LogInformation("Iniciando Pase de {NroExpediente} hacia {OficinaDestino} con {Folios} folios",
+            expediente.NroExpediente, expediente.Pase!.OficinaDestino, expediente.Pase.Folios);
 
         //Crear Trabajo de subida O Usar Uno Existente
         UploadJob job;
@@ -139,6 +178,8 @@ public class PaseWorkflow
                 Id = Guid.NewGuid(),
                 ExpedienteId = expediente.Id,
                 NroExpediente = expediente.NroExpediente,
+                TipoAccion = TipoAccion.Pase,
+                Causante = expediente.Causante,
                 Status = UploadStatus.Pending,
                 CreatedAt = DateTime.UtcNow,
                 PaseDataJson = JsonSerializer.Serialize(expediente.Pase)
@@ -164,6 +205,8 @@ public class PaseWorkflow
             // (respuesta lenta, corte de red). Si el pase ya figura, no se vuelve a enviar
             if (attempt > 0 && await PaseYaRealizadoAsync(expediente))
             {
+                _logger.LogInformation("El Pase de {NroExpediente} ya figura en transito hacia {OficinaDestino}: no se reenvia",
+                    expediente.NroExpediente, expediente.Pase!.OficinaDestino);
                 await MarcarCompletadoAsync(job);
                 return;
             }
@@ -182,15 +225,19 @@ public class PaseWorkflow
 
                 if (success)
                 {
+                    _logger.LogInformation("Pase de {NroExpediente} hacia {OficinaDestino} realizado", expediente.NroExpediente, expediente.Pase.OficinaDestino);
                     await MarcarCompletadoAsync(job);
                     return;
                 }
 
                 job.LastError = "Fallo de Pase en Playwright";
+                _logger.LogWarning("Intento {Intento}/{Maximo} de Pase de {NroExpediente} fallido: el sistema no confirmo",
+                    attempt + 1, maxRetries, expediente.NroExpediente);
             }
             catch (OperacionRechazadaException ex)
             {
                 // El sitio rechazo el pase: se corta sin reintentar y se muestra su motivo
+                _logger.LogWarning("Pase de {NroExpediente} rechazado por el sistema, no se reintenta: {Motivo}", expediente.NroExpediente, ex.Message);
                 job.Status = UploadStatus.Failed;
                 job.LastError = ex.Message;
                 await _uploadJobRepository.UpdateAsync(job);
@@ -199,6 +246,8 @@ public class PaseWorkflow
             catch(Exception ex)
             {
                 job.LastError = ex.Message;
+                _logger.LogWarning(ex, "Intento {Intento}/{Maximo} de Pase de {NroExpediente} fallido",
+                    attempt + 1, maxRetries, expediente.NroExpediente);
             }
 
             job.RetryCount++;
@@ -214,12 +263,16 @@ public class PaseWorkflow
         // El ultimo intento tambien pudo haber llegado al sitio
         if (await PaseYaRealizadoAsync(expediente))
         {
+            _logger.LogInformation("El Pase de {NroExpediente} figura en transito hacia {OficinaDestino} tras el ultimo intento: se da por realizado",
+                expediente.NroExpediente, expediente.Pase!.OficinaDestino);
             await MarcarCompletadoAsync(job);
             return;
         }
 
         //Intentos Agotados
         var ultimoError = job.LastError;
+        _logger.LogError("Pase de {NroExpediente} fallido tras {Maximo} intentos. Ultimo error: {Error}",
+            expediente.NroExpediente, maxRetries, ultimoError);
         job.Status = UploadStatus.Failed;
         job.LastError = $"Se Alcanzaron los Intentos Maximos de Pase. Ultimo error: {ultimoError}";
         await _uploadJobRepository.UpdateAsync(job);
@@ -236,9 +289,10 @@ public class PaseWorkflow
             var estado = await _automationBusqueda.ConsultarEstadoAsync(expediente.NroExpediente);
             return estado?.EnTransitoHacia(expediente.Pase!.OficinaDestino) == true;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             // Si la verificacion falla se sigue con el reintento normal
+            _logger.LogWarning(ex, "No se pudo verificar si el Pase de {NroExpediente} ya estaba hecho", expediente.NroExpediente);
             return false;
         }
     }

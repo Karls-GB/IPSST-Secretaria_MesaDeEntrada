@@ -230,6 +230,8 @@ namespace IPSST
             services.AddScoped<PaseWorkflow>();
             services.AddScoped<ResolucionWorkflow>();
             services.AddScoped<CancelarPaseWorkflow>();
+            // Singleton: guarda las busquedas de la sesion
+            services.AddSingleton<HistorialService>();
             services.AddSingleton<OficinaCacheService>();
 
             //UI

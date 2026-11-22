@@ -12,7 +12,7 @@
         WindowStartupLocation="CenterScreen"
         Loaded="MainWindow_Loaded">
 
-    <Grid>
+    <Grid x:Name="RootGrid">
 
         <TabControl x:Name="MainTabControl" Grid.ColumnSpan="2" SelectionChanged="TabControl_SelectionChanged">
 
@@ -36,13 +36,6 @@
                                 Margin="15,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/>
                         <TextBlock x:Name="BuscandoText" Text="Buscando..." VerticalAlignment="Center"
                                 Margin="8,0,0,0" Foreground="Gray" Visibility="Collapsed"/>
-                    </StackPanel>
-
-                    <StackPanel Grid.Row="1" Grid.Column="1" Margin="20,10,0,0">
-                        <TextBlock Text="Historial de busquedas:" FontWeight="Bold" Margin="0,0,0,10"/>
-                        <ListBox x:Name="HistorialListBox"  HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
-                                    MouseDoubleClick="HistorialListBox_MouseDoubleClick"
-                                    ToolTip="Doble click para volver a buscar" Height="100"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
@@ -255,25 +248,72 @@
                 </Grid>
             </TabItem>
 
+            <TabItem Header="Historial">
+                <Grid Margin="20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,10">
+                        <TextBlock Text="Accion:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <ComboBox x:Name="HistorialAccionCombo" Width="140" SelectedIndex="0"
+                                  SelectionChanged="HistorialFiltro_SelectionChanged">
+                            <ComboBoxItem Content="Todas"/>
+                            <ComboBoxItem Content="Busqueda"/>
+                            <ComboBoxItem Content="Pase"/>
+                            <ComboBoxItem Content="Resolucion"/>
+                            <ComboBoxItem Content="Cancelacion"/>
+                        </ComboBox>
+                        <TextBlock Text="Fecha:" VerticalAlignment="Center" Margin="20,0,8,0"/>
+                        <ComboBox x:Name="HistorialFechaCombo" Width="120" SelectedIndex="1"
+                                  SelectionChanged="HistorialFiltro_SelectionChanged">
+                            <ComboBoxItem Content="Hoy"/>
+                            <ComboBoxItem Content="7 dias"/>
+                            <ComboBoxItem Content="Todo"/>
+                        </ComboBox>
+                        <Button Content="Actualizar" Margin="20,0,0,0" Padding="15,5" Click="HistorialActualizarButton_Click"/>
+                        <TextBlock x:Name="HistorialCantidadText" VerticalAlignment="Center" Margin="15,0,0,0" Foreground="Gray"/>
+                    </StackPanel>
+
+                    <DataGrid x:Name="HistorialGrid" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True"
+                              CanUserAddRows="False" HeadersVisibility="Column" SelectionMode="Single">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Fallido}" Value="True">
+                                        <Setter Property="Foreground" Value="Firebrick"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Fecha/Hora" Binding="{Binding Fecha, StringFormat=dd/MM/yyyy HH:mm}"/>
+                            <DataGridTextColumn Header="Accion" Binding="{Binding Accion}"/>
+                            <DataGridTextColumn Header="Expediente" Binding="{Binding NroExpediente}"/>
+                            <DataGridTextColumn Header="Causante" Binding="{Binding Causante}" MaxWidth="250"/>
+                            <DataGridTextColumn Header="Resultado" Binding="{Binding Resultado}"/>
+                            <DataGridTextColumn Header="Detalle" Binding="{Binding Detalle}" Width="*">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="TextWrapping" Value="Wrap"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTemplateColumn x:Name="HistBuscarColumn">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Buscar de nuevo" Padding="8,2" Click="HistorialBuscarDeNuevo_Click"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
 
         </TabControl>
 
-        <Border x:Name="ToastBorder" HorizontalAlignment="Right" VerticalAlignment="Bottom"
-            Margin="0,0,20,20" Padding="15,10" CornerRadius="6" Visibility="Collapsed"
-            MaxWidth="350">
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.4"/>
-            </Border.Effect>
-            <TextBlock x:Name="ToastText" Foreground="White" TextWrapping="Wrap" FontSize="13"/>
-        </Border>
-
-        <Border x:Name="ResolucionToastBorder" HorizontalAlignment="Right" VerticalAlignment="Bottom"
-            Margin="0,0,20,20" Padding="15,10" CornerRadius="6" Visibility="Collapsed"
-            MaxWidth="350">
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.4"/>
-            </Border.Effect>
-            <TextBlock x:Name="ResolucionToastText" Foreground="White" TextWrapping="Wrap" FontSize="13"/>
-        </Border>
+        <!-- Los avisos (uno por pestaña) se crean desde el codigo: ver ObtenerAviso -->
     </Grid>
 </Window>

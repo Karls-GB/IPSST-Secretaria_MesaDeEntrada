@@ -140,7 +140,7 @@ public class PlaywrightPase : IAutomationPase
             var paseExitoso = page.Url.Contains($"hviewexppases.{_session.ExtentionUrl}", StringComparison.OrdinalIgnoreCase);
             if (paseExitoso)
             {
-                _logger.LogInformation("Pase confirmado para {OficinaDestino}", oficinaDestino);
+                _logger.LogInformation("Pase confirmado para {OficinaDestino} (ExpId {ExpId})", oficinaDestino, expId);
                 return true;
             }
            
@@ -148,12 +148,12 @@ public class PlaywrightPase : IAutomationPase
             var motivo = (await LeerCampoAsync(page, "_RAZONNOPUEDE"))?.Trim();
             if (!string.IsNullOrWhiteSpace(motivo))
             {
-                _logger.LogWarning("Pase rechazado para {OficinaDestino}: {Motivo}", oficinaDestino, motivo);
+                _logger.LogWarning("Pase rechazado para {OficinaDestino} (ExpId {ExpId}): {Motivo}", oficinaDestino, expId, motivo);
                 throw new OperacionRechazadaException($"El sistema rechazó el Pase: {motivo}");
             }
 
             // Sin motivo: no se sabe que paso, se deja reintentar
-            _logger.LogError("No se pudo confirmar el Pase para {OficinaDestino}: el sistema no dio motivo", oficinaDestino);
+            _logger.LogWarning("No se pudo confirmar el Pase para {OficinaDestino} (ExpId {ExpId}): el sistema no dio motivo", oficinaDestino, expId);
             return false;
         });
     }

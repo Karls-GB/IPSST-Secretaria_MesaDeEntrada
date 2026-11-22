@@ -43,15 +43,28 @@ public class RecepcionService
 
     public async Task<RecepcionItem?> PrepararIndividualAsync(string nroExpediente)
     {
-        return await _automationRecepcion.PrepararRecepcionAsync(nroExpediente);
+        _logger.LogInformation("Preparando Recepcion de {NroExpediente}", nroExpediente);
+
+        try
+        {
+            return await _automationRecepcion.PrepararRecepcionAsync(nroExpediente);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al preparar la Recepcion de {NroExpediente}", nroExpediente);
+            throw;
+        }
     }
 
     public async Task<bool> ConfirmarIndividualAsync(string nroExpediente, bool isRetry = false, int maxRetries = 3)
     {
+        _logger.LogInformation("Iniciando Recepcion de {NroExpediente}", nroExpediente);
+
         var job = new UploadJob
         {
             Id = Guid.NewGuid(),
             NroExpediente = nroExpediente,
+            TipoAccion = TipoAccion.Recepcion,
             Status = UploadStatus.Pending,
             CreatedAt = DateTime.UtcNow
         };
@@ -84,6 +97,8 @@ public class RecepcionService
                 }
                 else
                 {
+                    _logger.LogWarning("Intento {Intento}/{Maximo} de Recepcion de {NroExpediente} fallido: el sistema no confirmo",
+                        attempt + 1, maxRetries, nroExpediente);
                     job.RetryCount++;
                     attempt++;
                     job.LastError = "Fallo de Recepcion en Playwright";
@@ -96,12 +111,16 @@ public class RecepcionService
             }
             catch (Exception ex)
             {
+                _logger.LogWarning(ex, "Intento {Intento}/{Maximo} de Recepcion de {NroExpediente} fallido",
+                    attempt + 1, maxRetries, nroExpediente);
                 job.RetryCount++;
                 attempt++;
                 job.LastError = ex.Message;
 
                 if (attempt >= maxRetries)
                 {
+                    _logger.LogError("Recepcion de {NroExpediente} fallida tras {Maximo} intentos. Ultimo error: {Error}",
+                        nroExpediente, maxRetries, ex.Message);
                     job.Status = UploadStatus.Failed;
                     await _uploadJobRepository.UpdateAsync(job);
                     throw;
@@ -111,6 +130,7 @@ public class RecepcionService
             }
         }
 
+        _logger.LogError("Recepcion de {NroExpediente} fallida tras {Maximo} intentos: el sistema no confirmo", nroExpediente, maxRetries);
         job.Status = UploadStatus.Failed;
         job.LastError = "Se Alcanzaron los Intentos Maximos de Recepcion";
         await _uploadJobRepository.UpdateAsync(job);
@@ -124,7 +144,15 @@ public class RecepcionService
             throw new ArgumentException("Oficina Requerida");
         }
 
-        return await _automationRecepcion.BuscarPorOficinaAsync(oficina);
+        try
+        {
+            return await _automationRecepcion.BuscarPorOficinaAsync(oficina);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al buscar el listado de Recepcion de {Oficina}", oficina);
+            throw;
+        }
     }
 
     public async Task<BulkAdmitResult> AdmitBulkAsync(string oficina, List<string> nroExpedientes, bool isRetry = false, int maxRetries = 3)
@@ -139,10 +167,14 @@ public class RecepcionService
             throw new ArgumentException("Seleccione Expedientes para Recepcion");
         }
 
+        _logger.LogInformation("Iniciando Recepcion multiple de {Cantidad} expedientes de {Oficina}: {Expedientes}",
+            nroExpedientes.Count, oficina, string.Join(", ", nroExpedientes));
+
         var job = new UploadJob
         {
             Id = Guid.NewGuid(),
             NroExpediente = string.Join(",", nroExpedientes),
+            TipoAccion = TipoAccion.RecepcionMultiple,
             Status = UploadStatus.Pending,
             CreatedAt = DateTime.UtcNow
         };
@@ -175,6 +207,8 @@ public class RecepcionService
 
                 if (pending.Count > 0)
                 {
+                    _logger.LogWarning("Intento {Intento}/{Maximo} de Recepcion multiple: quedan pendientes {Pendientes}",
+                        attempt + 1, maxRetries, string.Join(", ", pending));
                     job.RetryCount++;
                     attempt++;
                     job.LastError = $"Pendientes: {string.Join(",", pending)}";
@@ -187,12 +221,16 @@ public class RecepcionService
             }
             catch (Exception ex)
             {
+                _logger.LogWarning(ex, "Intento {Intento}/{Maximo} de Recepcion multiple fallido. Pendientes: {Pendientes}",
+                    attempt + 1, maxRetries, string.Join(", ", pending));
                 job.RetryCount++;
                 attempt++;
                 job.LastError = ex.Message;
 
                 if (attempt >= maxRetries)
                 {
+                    _logger.LogError("Recepcion multiple fallida tras {Maximo} intentos. Sin recibir: {Pendientes}. Ultimo error: {Error}",
+                        maxRetries, string.Join(", ", pending), ex.Message);
                     job.Status = UploadStatus.Failed;
                     await _uploadJobRepository.UpdateAsync(job);
                     throw;
@@ -204,11 +242,14 @@ public class RecepcionService
 
         if (pending.Count == 0)
         {
+            _logger.LogInformation("Recepcion multiple completa: {Cantidad} expedientes recibidos", nroExpedientes.Count);
             job.Status = UploadStatus.Completed;
             job.CompletedAt = DateTime.UtcNow;
         }
         else
         {
+            _logger.LogError("Recepcion multiple incompleta tras {Maximo} intentos. Sin recibir: {Pendientes}",
+                maxRetries, string.Join(", ", pending));
             job.Status = UploadStatus.Failed;
             job.LastError = $"No se pudieron admitir: {string.Join(",", pending)}";
         }
