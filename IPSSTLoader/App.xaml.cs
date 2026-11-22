@@ -97,9 +97,38 @@ namespace IPSST
 
         }
 
+        private static string ObtenerCarpetaLogs()
+        {
+            var usuario = string.Concat(Environment.UserName.Split(Path.GetInvalidFileNameChars()));
+            var carpeta = Path.Combine(AppContext.BaseDirectory, "logs", usuario);
+
+            try
+            {
+                Directory.CreateDirectory(carpeta);
+                return carpeta;
+            }
+            catch (Exception)
+            {
+                // Sin permiso de escritura en la carpeta compartida: se loguea en la PC del usuario
+                var local = Path.Combine(ObtenerCarpetaLocal(), "logs");
+                Directory.CreateDirectory(local);
+                return local;
+            }
+        }
+
+        // Datos propios de cada usuario en su PC (sin permisos de administrador)
+        private static string ObtenerCarpetaLocal()
+        {
+            var carpeta = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IPSST");
+            Directory.CreateDirectory(carpeta);
+            return carpeta;
+        }
+
         private void ConfigurarLogging()
         {
-            var logPath = Path.Combine(AppContext.BaseDirectory, "logs", "log-.txt");
+            // Una carpeta por usuario junto al exe: varios usuarios usan el programa desde la carpeta
+            // compartida a la vez, y asi no escriben sobre el mismo archivo
+            var logPath = Path.Combine(ObtenerCarpetaLogs(), "log-.txt");
 
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
@@ -140,7 +169,19 @@ namespace IPSST
 
         private void ConfigureServices(IServiceCollection services)
         {
-            var configuration = new ConfigurationBuilder().SetBasePath(AppContext.BaseDirectory).AddJsonFile("appsettings.json", optional: false).Build();
+            // Dos capas: la configuracion comun (carpeta compartida) y la personal de cada usuario.
+            // La personal es opcional y solo pisa las claves que define; el resto sale de la comun
+            var configUsuario = Path.Combine(ObtenerCarpetaLocal(), "appsettings.usuario.json");
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(AppContext.BaseDirectory)
+                .AddJsonFile("appsettings.json", optional: false)
+                .AddJsonFile(configUsuario, optional: true)
+                .Build();
+
+            if (File.Exists(configUsuario))
+            {
+                Log.Information("Usando configuracion personal de {Ruta}", configUsuario);
+            }
             bool headless = configuration.GetValue<bool>("PlaywrightSettings:Headless");
             string baseUrl = configuration.GetValue<string>("PlaywrightSettings:BaseUrl")!;
             string extentionUrl = configuration.GetValue<string>("PlaywrightSettings:ExtentionUrl")!;
@@ -148,7 +189,7 @@ namespace IPSST
             var oficinaConfig = configuration.GetSection("Oficina").Get<OficinaConfig>();
             if (string.IsNullOrWhiteSpace(oficinaConfig?.Nombre))
             {
-                throw new InvalidOperationException("Falta 'Oficina:Nombre' en appsettings.json");
+                throw new InvalidOperationException($"Falta 'Oficina:Nombre' en appsettings.json (o esta vacio en {configUsuario})");
             }
             services.AddSingleton(oficinaConfig);
 
@@ -173,7 +214,10 @@ namespace IPSST
             services.AddSingleton<PlaywrightSession>(sp =>
                 new PlaywrightSession(headless, baseUrl, sp.GetRequiredService<ILogger<PlaywrightSession>>(), extentionUrl));
 
-            services.AddDbContextFactory<AppDbContext>(options => options.UseSqlite("Data Source = ipsstloader.db"));
+            // La base va en la PC de cada usuario: SQLite no es confiable en carpetas de red
+            // y varios usuarios escribiendo a la vez la pueden bloquear o danar
+            var dbPath = Path.Combine(ObtenerCarpetaLocal(), "ipsstloader.db");
+            services.AddDbContextFactory<AppDbContext>(options => options.UseSqlite($"Data Source={dbPath}"));
             services.AddScoped<IUploadJobRepository, UploadJobRepository>();
             services.AddScoped<IAutomationBusqueda, PlaywrightBusqueda>();
             services.AddScoped<IAutomationPase, PlaywrightPase>();

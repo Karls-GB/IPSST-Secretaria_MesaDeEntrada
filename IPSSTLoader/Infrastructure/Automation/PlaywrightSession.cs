@@ -2,6 +2,7 @@
 using Microsoft.Playwright;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace IPSST.Infrastructure.Automation;
@@ -36,6 +37,19 @@ public class PlaywrightSession : IAsyncDisposable
 
     public async Task InitializeAsync()
     {
+        // Primero se busca el navegador junto al ejecutable (carpeta ms-playwright, ej. en la carpeta compartida).
+        // Si no esta, Playwright usa el de %LOCALAPPDATA%\ms-playwright del usuario
+        var navegadoresJuntoAlExe = Path.Combine(AppContext.BaseDirectory, "ms-playwright");
+        if (Directory.Exists(navegadoresJuntoAlExe))
+        {
+            Environment.SetEnvironmentVariable("PLAYWRIGHT_BROWSERS_PATH", navegadoresJuntoAlExe);
+            _logger.LogInformation("Usando navegador de {Ruta}", navegadoresJuntoAlExe);
+        }
+        else
+        {
+            _logger.LogInformation("No hay carpeta ms-playwright junto al ejecutable; se usa la de AppData del usuario");
+        }
+
         _playwright = await Playwright.CreateAsync();
         _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
         {
