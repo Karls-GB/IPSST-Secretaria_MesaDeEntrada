@@ -200,14 +200,22 @@ public class PlaywrightPase : IAutomationPase
             await page.ClickAsync("input[name='W0027BTN_CANCELARPASE']");
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-            // El resultado se muestra en rojo en _RAZONNOPUEDE, en la misma pagina
-            var mensaje = (await LeerCampoAsync(page, "_RAZONNOPUEDE"))?.Trim() ?? string.Empty;
+            // El resultado aparece en rojo en el area de mensajes de GeneXus, en la misma pagina:
+            // <span class="ErrorViewer"><li>Expediente: 4301-... . Pase Cancelado</li></span>
+            var visor = page.Locator(".ErrorViewer");
+            var mensajeVisor = await visor.CountAsync() > 0
+                ? string.Join(" ", await visor.AllInnerTextsAsync()).Trim()
+                : string.Empty;
 
-            if (mensaje.Contains("cancel", StringComparison.OrdinalIgnoreCase))
+            if (mensajeVisor.Contains("Pase Cancelado", StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogInformation("Pase cancelado (ExpId {ExpId}): {Mensaje}", expId, mensaje);
+                _logger.LogInformation("Pase cancelado (ExpId {ExpId}): {Mensaje}", expId, mensajeVisor);
                 return true;
             }
+
+            // Cualquier otro mensaje (visor o _RAZONNOPUEDE) es un rechazo
+            var razon = (await LeerCampoAsync(page, "_RAZONNOPUEDE"))?.Trim() ?? string.Empty;
+            var mensaje = string.Join(" ", new[] { mensajeVisor, razon }.Where(m => !string.IsNullOrWhiteSpace(m)));
 
             if (!string.IsNullOrWhiteSpace(mensaje))
             {
