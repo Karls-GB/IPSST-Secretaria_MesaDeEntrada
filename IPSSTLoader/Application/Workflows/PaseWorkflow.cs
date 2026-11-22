@@ -1,5 +1,6 @@
 ﻿using IPSST.Application.Configuration;
 using IPSST.Domain.Entities;
+using IPSST.Domain.Exceptions;
 using IPSST.Domain.Enums;
 using IPSST.Domain.Interface;
 using IPSST.Domain.Validation;
@@ -159,6 +160,14 @@ public class PaseWorkflow
 
         while(attempt < maxRetries)
         {
+            // En un reintento: el intento anterior pudo llegar al sitio sin que se confirmara
+            // (respuesta lenta, corte de red). Si el pase ya figura, no se vuelve a enviar
+            if (attempt > 0 && await PaseYaRealizadoAsync(expediente))
+            {
+                await MarcarCompletadoAsync(job);
+                return;
+            }
+
             job.Status = UploadStatus.InProgress;
             job.StartedAt = DateTime.UtcNow;
             await _uploadJobRepository.UpdateAsync(job);
@@ -173,46 +182,71 @@ public class PaseWorkflow
 
                 if (success)
                 {
-                    job.Status = UploadStatus.Completed;
-                    job.CompletedAt = DateTime.UtcNow;
-                    await _uploadJobRepository.UpdateAsync(job);
+                    await MarcarCompletadoAsync(job);
                     return;
                 }
-                else
-                {
-                    job.RetryCount++;
-                    attempt++;
-                    job.LastError = "Fallo de Pase en Playwright";
 
-                    if(attempt < maxRetries)
-                    {
-                        await Task.Delay(5000);
-                    }
-                }
+                job.LastError = "Fallo de Pase en Playwright";
             }
-            catch(Exception ex) 
+            catch (OperacionRechazadaException ex)
             {
-                job.RetryCount++;
-                attempt++;
+                // El sitio rechazo el pase: se corta sin reintentar y se muestra su motivo
+                job.Status = UploadStatus.Failed;
                 job.LastError = ex.Message;
+                await _uploadJobRepository.UpdateAsync(job);
+                throw;
+            }
+            catch(Exception ex)
+            {
+                job.LastError = ex.Message;
+            }
 
-                if(attempt >= maxRetries)
-                {
-                    job.Status = UploadStatus.Failed;
-                    await _uploadJobRepository.UpdateAsync(job);
-                    throw;
-                }
+            job.RetryCount++;
+            attempt++;
+            await _uploadJobRepository.UpdateAsync(job);
 
+            if (attempt < maxRetries)
+            {
                 await Task.Delay(5000);
             }
         }
 
+        // El ultimo intento tambien pudo haber llegado al sitio
+        if (await PaseYaRealizadoAsync(expediente))
+        {
+            await MarcarCompletadoAsync(job);
+            return;
+        }
+
         //Intentos Agotados
+        var ultimoError = job.LastError;
         job.Status = UploadStatus.Failed;
-        job.LastError = "Se Alcanzaron los Intentos Maximos de Pase";
+        job.LastError = $"Se Alcanzaron los Intentos Maximos de Pase. Ultimo error: {ultimoError}";
         await _uploadJobRepository.UpdateAsync(job);
 
         // Se lanza para que la UI no informe el Pase como exitoso
         throw new InvalidOperationException(job.LastError);
+    }
+
+    // Busqueda rapida: si ya esta en transito hacia la oficina destino, el pase se hizo
+    private async Task<bool> PaseYaRealizadoAsync(Expediente expediente)
+    {
+        try
+        {
+            var estado = await _automationBusqueda.ConsultarEstadoAsync(expediente.NroExpediente);
+            return estado?.EnTransitoHacia(expediente.Pase!.OficinaDestino) == true;
+        }
+        catch (Exception)
+        {
+            // Si la verificacion falla se sigue con el reintento normal
+            return false;
+        }
+    }
+
+    private async Task MarcarCompletadoAsync(UploadJob job)
+    {
+        job.Status = UploadStatus.Completed;
+        job.CompletedAt = DateTime.UtcNow;
+        await _uploadJobRepository.UpdateAsync(job);
     }
 }

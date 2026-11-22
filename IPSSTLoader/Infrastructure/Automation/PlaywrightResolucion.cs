@@ -77,6 +77,41 @@ public class PlaywrightResolucion : IAutomationResolucion
         });
     }
 
+    // Abre el expediente y busca la resolucion por numero y fecha en su lista (Gridresol).
+    // Deja la pagina en el expediente, lista para ConfirmarResAsync si no estaba cargada
+    public async Task<bool> ExisteResolucionAsync(string nroExpediente, string nroResolucion, DateTime fechaResolucion)
+    {
+        return await _session.RunAsync(async page =>
+        {
+            if (!await AbrirExpedienteAsync(page, nroExpediente))
+            {
+                return false;
+            }
+
+            await GeneXusGrid.EsperarFilasAsync(page, "W0035nRC_Gridresol", "W0035EXPRESNRORES", _logger, "Gridresol");
+            var cantidad = await GeneXusGrid.LeerCantidadAsync(page, "W0035nRC_Gridresol");
+            var fecha = fechaResolucion.ToString("dd/MM/yyyy");
+
+            for (int i = 1; i <= cantidad; i++)
+            {
+                var nro = (await GeneXusGrid.LeerCampoAsync(page, "W0035EXPRESNRORES", i))?.Trim();
+                var fechaFila = (await GeneXusGrid.LeerCampoAsync(page, "W0035EXPRESFECHA", i))?.Trim();
+
+                if (MismoNumero(nro, nroResolucion) && fechaFila == fecha)
+                {
+                    _logger.LogInformation("La Resolucion {NroResolucion} del {Fecha} ya figura en {NroExpediente}", nroResolucion, fecha, nroExpediente);
+                    return true;
+                }
+            }
+
+            return false;
+        });
+    }
+
+    // Compara como numero: "08264" y "8264" son la misma resolucion
+    private static bool MismoNumero(string? a, string b) =>
+        long.TryParse(a, out var x) && long.TryParse(b.Trim(), out var y) && x == y;
+
     private async Task<bool> AbrirExpedienteAsync(IPage page, string nroExpediente)
     {
         _logger.LogDebug("Navegando a Resoluciones para {NroExpediente}", nroExpediente);

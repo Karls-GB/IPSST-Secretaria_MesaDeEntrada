@@ -18,6 +18,10 @@ public class EstadoExpediente
     // Ej: "EN TRANSITO A SECRETARIA GENERAL - CASA CENTRAL"
     public string Descripcion => Normalizar($"{Estado} {OficinaDestino}");
 
+    // Tiene un pase hecho hacia esa oficina (ej. "INTERVENCION - CASA CENTRAL")
+    public bool EnTransitoHacia(string oficina) =>
+        EnTransito && string.Equals(Normalizar(OficinaDestino), Normalizar(oficina), StringComparison.OrdinalIgnoreCase);
+
     // Un pase solo se puede cancelar si el expediente esta en la oficina que lo hizo
     public bool EstaEnOficina(string oficina) =>
         string.Equals(Normalizar(Oficina), Normalizar(oficina), StringComparison.OrdinalIgnoreCase);

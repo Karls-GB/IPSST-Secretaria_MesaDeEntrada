@@ -9,4 +9,5 @@ public interface IAutomationResolucion
 {
     Task<ResPreparation?> PrepararResolucionAsync(string nroExpediente);
     Task<bool> ConfirmarResAsync(string nroExpediente, string nroResolucion, DateTime fechaResolucion, string observacionesRes);
+    Task<bool> ExisteResolucionAsync(string nroExpediente, string nroResolucion, DateTime fechaResolucion);
 }

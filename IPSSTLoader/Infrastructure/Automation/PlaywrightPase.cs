@@ -1,5 +1,6 @@
 ﻿using IPSST.Application.Services;
 using IPSST.Domain.Entities;
+using IPSST.Domain.Exceptions;
 using IPSST.Domain.Interface;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
@@ -143,8 +144,16 @@ public class PlaywrightPase : IAutomationPase
                 return true;
             }
            
-            var errorMessage = await page.InputValueAsync("input[name='_RAZONNOPUEDE']");
-            _logger.LogError("Pase rechazado para {OficinaDestino}: {Error}", oficinaDestino, errorMessage);
+            // Rechazo del sitio: el motivo queda en _RAZONNOPUEDE y la pagina sigue en el formulario
+            var motivo = (await LeerCampoAsync(page, "_RAZONNOPUEDE"))?.Trim();
+            if (!string.IsNullOrWhiteSpace(motivo))
+            {
+                _logger.LogWarning("Pase rechazado para {OficinaDestino}: {Motivo}", oficinaDestino, motivo);
+                throw new OperacionRechazadaException($"El sistema rechazó el Pase: {motivo}");
+            }
+
+            // Sin motivo: no se sabe que paso, se deja reintentar
+            _logger.LogError("No se pudo confirmar el Pase para {OficinaDestino}: el sistema no dio motivo", oficinaDestino);
             return false;
         });
     }

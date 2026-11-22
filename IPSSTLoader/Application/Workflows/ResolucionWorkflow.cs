@@ -79,6 +79,14 @@ public class ResolucionWorkflow
 
         while(attempt < maxRetries && !resolucionSuccess)
         {
+            // En un reintento: el intento anterior pudo cargar la resolucion sin que se confirmara.
+            // Nunca se carga dos veces la misma resolucion
+            if (attempt > 0 && await ResolucionYaCargadaAsync(expediente))
+            {
+                resolucionSuccess = true;
+                break;
+            }
+
             job.Status = UploadStatus.InProgress;
             job.StartedAt = DateTime.UtcNow;
             await _uploadJobRepository.UpdateAsync(job);
@@ -93,37 +101,38 @@ public class ResolucionWorkflow
 
                 if (!resolucionSuccess)
                 {
-                    job.RetryCount++;
-                    attempt++;
                     job.LastError = "Fallo de Resolucion en Playwright";
-
-                    if(attempt < maxRetries)
-                    {
-                        await Task.Delay(5000);
-                    }
                 }
             }
             catch (Exception ex)
             {
+                job.LastError = ex.Message;
+            }
+
+            if (!resolucionSuccess)
+            {
                 job.RetryCount++;
                 attempt++;
-                job.LastError = ex.Message;
+                await _uploadJobRepository.UpdateAsync(job);
 
-                if(attempt >= maxRetries)
+                if (attempt < maxRetries)
                 {
-                    job.Status = UploadStatus.Failed;
-                    await _uploadJobRepository.UpdateAsync(job);
-                    throw;
+                    await Task.Delay(5000);
                 }
-
-                await Task.Delay(5000);
             }
+        }
+
+        // El ultimo intento tambien pudo haber cargado la resolucion
+        if (!resolucionSuccess && await ResolucionYaCargadaAsync(expediente))
+        {
+            resolucionSuccess = true;
         }
 
         if (!resolucionSuccess)
         {
+            var ultimoError = job.LastError;
             job.Status = UploadStatus.Failed;
-            job.LastError = "Se Alcanzaron los Intentos Maximos de Resolucion";
+            job.LastError = $"Se Alcanzaron los Intentos Maximos de Resolucion. Ultimo error: {ultimoError}";
             await _uploadJobRepository.UpdateAsync(job);
 
             // Se lanza para que la UI no informe la Resolucion como exitosa
@@ -137,5 +146,21 @@ public class ResolucionWorkflow
         
         //Ejecutar Pase
         await _paseWorkflow.ExecuteAsync(expediente, expId, maxRetries: maxRetries, existingJob: job);
+    }
+
+    private async Task<bool> ResolucionYaCargadaAsync(Expediente expediente)
+    {
+        try
+        {
+            return await _automationResolucion.ExisteResolucionAsync(
+                expediente.NroExpediente,
+                expediente.Resolucion!.NroResolucion,
+                expediente.Resolucion.FechaResolucion);
+        }
+        catch (Exception)
+        {
+            // Si la verificacion falla se sigue con el reintento normal
+            return false;
+        }
     }
 }
