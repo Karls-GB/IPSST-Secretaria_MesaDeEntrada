@@ -9,4 +9,6 @@ public interface IAutomationBusqueda
 {
     Task<ResultadoBusqueda?> SearchAsync(string nroExpediente);
     Task<EstadoExpediente?> ConsultarEstadoAsync(string nroExpediente);
+    Task<(List<ObservacionItem> Observaciones, int Faltantes)> ObtenerTodasObservacionesAsync(string nroExpediente);
+    Task<string?> ObtenerTrabajadoPorAsync(string nroExpediente);
 }

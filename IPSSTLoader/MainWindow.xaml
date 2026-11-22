@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:IPSST"
         mc:Ignorable="d"
         Title="MainWindow" Height="720" Width="1280"
-        MinHeight="600" MinWidth="900"
+        MinHeight="480" MinWidth="800"
         PreviewKeyDown="Window_PreviewKeyDown"
         WindowStartupLocation="CenterScreen"
         Loaded="MainWindow_Loaded">
@@ -48,6 +48,8 @@
             </TabItem>
 
             <TabItem Header="Pase">
+                <!-- En pantallas chicas el formulario se desplaza en lugar de cortarse -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <Grid Margin="20">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -98,9 +100,11 @@
                     <Button x:Name="ConfirmarPaseButton" Content="Confirmar" Grid.Row="6" Width="120" Padding="10,5"
                             HorizontalAlignment="Left" Click="ConfirmarPaseButton_Click"/>
                 </Grid>
+                </ScrollViewer>
             </TabItem>
 
             <TabItem Header="Resolucion">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <Grid Margin="20">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -180,6 +184,7 @@
                     <Button x:Name="ConfirmarResolucionButton" Content="Confirmar" Grid.Row="11" Width="120" Padding="10,5"
                             HorizontalAlignment="Left" Click="ConfirmarResolucionButton_Click"/>
                 </Grid>
+                </ScrollViewer>
             </TabItem>
 
             <TabItem Header="Recepcion">

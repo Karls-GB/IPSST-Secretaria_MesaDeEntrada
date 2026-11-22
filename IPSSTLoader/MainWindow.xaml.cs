@@ -50,6 +50,7 @@ public partial class MainWindow : Window
         Dictionary<string, ResolucionDefaultConfig> resolucionDefaults)
     {
         InitializeComponent();
+        this.AjustarAPantalla();
 
         _busquedaService = busquedaService;
         _recepcionService = recepcionService;
@@ -98,7 +99,7 @@ public partial class MainWindow : Window
 
             if (_resultadoBusquedaWindow == null)
             {
-                _resultadoBusquedaWindow = new ResultadoBusquedaWindow(result);
+                _resultadoBusquedaWindow = new ResultadoBusquedaWindow(result, _busquedaService);
                 _resultadoBusquedaWindow.Closed += (s, args) => _resultadoBusquedaWindow = null;
                 _resultadoBusquedaWindow.Show();
             }
@@ -307,6 +308,19 @@ public partial class MainWindow : Window
         ObservacionesPaseBox.IsEnabled = !cancelar;
     }
 
+    // Muestra por que el expediente no esta disponible y ofrece abrir su busqueda completa con un click (Enter = Si)
+    private async Task OfrecerBusquedaAsync(string nroExpediente, string motivo)
+    {
+        var respuesta = MessageBox.Show(
+            $"{motivo}\n\n¿Desea realizar la búsqueda del expediente?",
+            "Expediente no disponible", MessageBoxButton.YesNo, MessageBoxImage.Information);
+
+        if (respuesta == MessageBoxResult.Yes)
+        {
+            await EjecutarBusquedaAsync(nroExpediente.Trim());
+        }
+    }
+
     private static bool MismaOficina(string a, string b)
     {
         static string Normalizar(string s) => Regex.Replace(s.Trim(), @"\s+", " ");
@@ -357,7 +371,7 @@ public partial class MainWindow : Window
 
         if (preparacion.PasePendiente is not PasePendiente pendiente)
         {
-            MessageBox.Show(preparacion.MotivoNoDisponible ?? "El expediente no tiene un pase pendiente desde esta oficina.");
+            await OfrecerBusquedaAsync(nro, preparacion.MotivoNoDisponible ?? "El expediente no tiene un pase pendiente desde esta oficina.");
             return;
         }
 
@@ -443,8 +457,8 @@ public partial class MainWindow : Window
         // Existe pero no se puede hacer el pase desde aca: el mensaje indica donde esta
         if (result.MotivoNoDisponible is string motivo)
         {
-            MessageBox.Show(motivo);
             ConfirmarPaseButton.IsEnabled = true;
+            await OfrecerBusquedaAsync(PaseNroExpedienteBox.Text, motivo);
             return;
         }
 

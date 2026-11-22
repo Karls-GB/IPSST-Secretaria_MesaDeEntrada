@@ -41,7 +41,8 @@ public class PlaywrightBusqueda : IAutomationBusqueda
             var motivoRaw = await page.InputValueAsync("input[name='EXPAREAAREA']");
             var asuntoRaw = await page.InputValueAsync("input[name='EXPASUNTO']");
             var causanteRaw = await page.InputValueAsync("input[name='EXPCAUSANTE']");
-            var estadoRaw = $"{await page.InputValueAsync("input[name='EXPESTADODESCRIPCION']")} {await page.InputValueAsync("input[name='W0050_OFICINADESTINONOMBRECOMPLETO']")}";
+            var estadoRaw = (await page.InputValueAsync("input[name='EXPESTADODESCRIPCION']"))?.Trim();
+            var oficinaDestinoRaw = (await page.InputValueAsync("input[name='W0050_OFICINADESTINONOMBRECOMPLETO']"))?.Trim();
             var oficinaRaw = await page.InputValueAsync("input[name='W0050_EXPOFINOMBRE']");
             var sucursalRaw = await page.InputValueAsync("input[name='W0050_EXPSUCURSALNOMBRE']");
             var fechaPaseRaw = await page.InputValueAsync("input[name='W0050_EXPPASESFECHAHORA']");
@@ -77,26 +78,67 @@ public class PlaywrightBusqueda : IAutomationBusqueda
                 CuitCuil = cuitCuil,
                 Estado = estadoRaw,
                 Oficina = oficinaRaw,
+                OficinaDestino = string.IsNullOrWhiteSpace(oficinaDestinoRaw) ? null : oficinaDestinoRaw,
                 Sucursal = sucursalRaw,
                 FechaPase = fechaPaseRaw,
                 UsuarioPase = usuarioPaseRaw
             };
 
-            //Logica para encontrar quien lo trabajo
-            bool enSecretaria = oficinaRaw?.Contains("SECRETARIA", StringComparison.OrdinalIgnoreCase) == true;
-            bool enTransito = estadoRaw?.Contains("EN TRANSITO", StringComparison.OrdinalIgnoreCase) == true;
-
-            (result.Observaciones, result.ObservacionesFaltantes) = await ObtenerObservacionesAsync(page, expId);
-            _logger.LogInformation("Busqueda las observaciones de {NroExpediente} completada: {CantidadObservaciones} observaciones encontradas", nroExpediente, result.Observaciones.Count);
-
-            if (enSecretaria && !enTransito)
-            {
-                _logger.LogDebug("Buscando usuario asignado al expediente {NroExpediente} (Oficina: {Oficina}, Estado: {Estado})", nroExpediente, oficinaRaw, estadoRaw);
-                result.TrabajadoPor = await ObtenerTrabajadoPorAsync(page, nroExpediente);
-                _logger.LogDebug("Busqueda del usuario asignado al expediente {NroExpediente} completada: {TrabajadoPor}", nroExpediente, result.TrabajadoPor);
-            }
+            // "Trabajado por" ya no se busca aca: el usuario lo pide desde la ventana (ObtenerTrabajadoPorAsync)
+            await CargarObservacionesInicialesAsync(page, result);
+            _logger.LogInformation("Busqueda las observaciones de {NroExpediente} completada: {CantidadObservaciones} observaciones en la primera pagina", nroExpediente, result.Observaciones.Count);
 
             return result;
+        });
+    }
+
+    // Todas las paginas de observaciones, a pedido del usuario. Se vuelve a abrir el expediente
+    // porque la pagina compartida pudo cambiar desde la busqueda (otra operacion o keep-alive)
+    public async Task<(List<ObservacionItem> Observaciones, int Faltantes)> ObtenerTodasObservacionesAsync(string nroExpediente)
+    {
+        return await _session.RunAsync(async page =>
+        {
+            var todas = new List<ObservacionItem>();
+            int faltantes = 0;
+
+            if (await BuscarYAbrirAsync(page, nroExpediente) is null)
+            {
+                return (todas, faltantes);
+            }
+
+            await page.ClickAsync("#W0047TAB_0002");
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+            // Tope de seguridad por si el indicador de fin de tabla nunca llega
+            for (int pagina = 1; pagina <= 200; pagina++)
+            {
+                var (filas, faltantesPagina) = await LeerPaginaObservacionesAsync(page, pagina, pagina == 1 ? "#W0047TAB_0002" : null);
+                todas.AddRange(filas);
+                faltantes += faltantesPagina;
+
+                if (filas.Count + faltantesPagina == 0 || await EsUltimaPaginaObservacionesAsync(page))
+                {
+                    break;
+                }
+
+                await page.ClickAsync("#W0050SIGUIENTE");
+                await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            }
+
+            _logger.LogInformation("Observaciones completas de {NroExpediente}: {Cantidad} ({Faltantes} sin cargar)", nroExpediente, todas.Count, faltantes);
+            return (todas, faltantes);
+        });
+    }
+
+    // "Trabajado por", a pedido del usuario
+    public async Task<string?> ObtenerTrabajadoPorAsync(string nroExpediente)
+    {
+        return await _session.RunAsync(async page =>
+        {
+            _logger.LogDebug("Buscando usuario asignado al expediente {NroExpediente}", nroExpediente);
+            var usuario = await ConsultarTrabajadoPorAsync(page, nroExpediente);
+            _logger.LogInformation("Expediente {NroExpediente} trabajado por: {TrabajadoPor}", nroExpediente, usuario ?? "(sin asignar)");
+            return usuario;
         });
     }
 
@@ -164,7 +206,7 @@ public class PlaywrightBusqueda : IAutomationBusqueda
         return await locator.CountAsync() > 0 ? await locator.InputValueAsync() : null;
     }
 
-    private async Task<string?> ObtenerTrabajadoPorAsync(IPage page, string nroExpediente)
+    private async Task<string?> ConsultarTrabajadoPorAsync(IPage page, string nroExpediente)
     {
         // Navega a la cola de Pases solo si no se esta ya en ella
         // Se incluye "?Pases": la lista de Cancelacion usa la misma pagina con "?CancelPases"
@@ -190,72 +232,92 @@ public class PlaywrightBusqueda : IAutomationBusqueda
         return await GeneXusGrid.LeerCampoAsync(page, "W0009EXPPASEUSUARIO", 1);
     }
 
-    private async Task<(List<ObservacionItem> Observaciones, int Faltantes)> ObtenerObservacionesAsync(IPage page, string expId)
+    private const string ObservNrc = "W0050nRC_Gridobserv";
+    private const string ObservFila = "W0050EXPOBSERVFECHA";
+
+    // La tabla va de la mas reciente a la mas antigua, 30 por pagina.
+    // Se carga solo la primera pagina y, aparte, la primera observacion que se agrego
+    // (ultima fila de la ultima pagina). El resto se pide desde la ventana
+    private async Task CargarObservacionesInicialesAsync(IPage page, ResultadoBusqueda result)
     {
-        const string campoNrc = "W0050nRC_Gridobserv";
-        const string campoFila = "W0050EXPOBSERVFECHA";
-
-        var observaciones = new List<ObservacionItem>();
-        int faltantes = 0;
-
         await page.ClickAsync("#W0047TAB_0002");
         await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        int pagina = 1;
+        (result.Observaciones, result.ObservacionesFaltantes) = await LeerPaginaObservacionesAsync(page, 1, "#W0047TAB_0002");
+        // Sin filas no hay paginas que recorrer, aunque falte el indicador de fin de tabla
+        var filasPagina = result.Observaciones.Count + result.ObservacionesFaltantes;
+        result.HayMasObservaciones = filasPagina > 0 && !await EsUltimaPaginaObservacionesAsync(page);
 
-        while (true)
+        if (!result.HayMasObservaciones)
         {
-            // Primera pagina: se recarga volviendo a abrir la solapa. Ultima pagina: volviendo a pedir #W0050ULTIMO
-            var selectorRecarga = pagina == 1 ? "#W0047TAB_0002" : "#W0050ULTIMO";
-            await GeneXusGrid.EsperarFilasAsync(page, campoNrc, campoFila, _logger, $"Gridobserv pagina {pagina}",
-                recargar: async () =>
-                {
-                    await page.ClickAsync(selectorRecarga);
-                    await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-                });
-
-            var rowCount = await GeneXusGrid.LeerCantidadAsync(page, campoNrc);
-            _logger.LogDebug("Leyendo página {Pagina} de observaciones. Cantidad de filas: {RowCount}", pagina, rowCount);
-
-            for (int i = 1; i <= rowCount; i++)
-            {
-                var fecha = await GeneXusGrid.LeerCampoAsync(page, campoFila, i);
-
-                if (fecha is null)
-                {
-                    // La fila no cargo: se cuenta y se sigue con las demas
-                    faltantes++;
-                    continue;
-                }
-
-                observaciones.Add(new ObservacionItem
-                {
-                    FechaHora = fecha,
-                    Descripcion = await GeneXusGrid.LeerCampoAsync(page, "W0050EXPOBSERVACIONES", i) ?? string.Empty,
-                    Usuario = await GeneXusGrid.LeerCampoAsync(page, "W0050EXPOBSERVUSUNOMBRE", i) ?? string.Empty,
-                    Oficina = await GeneXusGrid.LeerCampoAsync(page, "W0050EXPOBSERVOFINOMBRECOMPLETO", i) ?? string.Empty
-                });
-            }
-
-            var eofRaw = await page.InputValueAsync("input[name='W0050Gridobserv_nEOF']");
-            if( eofRaw == "1")
-            {
-                break;
-            }
-
-            observaciones.Add(new ObservacionItem
-            {
-                FechaHora = "",
-                Descripcion = "...",
-                Usuario = "",
-                Oficina = ""
-            });
-
-            await page.ClickAsync("#W0050ULTIMO");
-            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-            pagina++;
+            result.PrimeraObservacion = result.Observaciones.LastOrDefault();
+            return;
         }
 
-        return (observaciones, faltantes);
+        await page.ClickAsync("#W0050ULTIMO");
+        await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await GeneXusGrid.EsperarFilasAsync(page, ObservNrc, ObservFila, _logger, "Gridobserv ultima pagina",
+            recargar: async () =>
+            {
+                await page.ClickAsync("#W0050ULTIMO");
+                await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            });
+
+        // Ultima fila de la ultima pagina; si justo esa no cargo, la anterior mas antigua
+        for (int i = await GeneXusGrid.LeerCantidadAsync(page, ObservNrc); i >= 1 && result.PrimeraObservacion is null; i--)
+        {
+            result.PrimeraObservacion = await LeerObservacionAsync(page, i);
+        }
     }
+
+    // Lee una pagina de la tabla. Las filas que no cargaron se cuentan, no se cortan las demas
+    private async Task<(List<ObservacionItem> Filas, int Faltantes)> LeerPaginaObservacionesAsync(IPage page, int pagina, string? selectorRecarga)
+    {
+        await GeneXusGrid.EsperarFilasAsync(page, ObservNrc, ObservFila, _logger, $"Gridobserv pagina {pagina}",
+            recargar: selectorRecarga is null ? null : async () =>
+            {
+                await page.ClickAsync(selectorRecarga);
+                await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            });
+
+        var rowCount = await GeneXusGrid.LeerCantidadAsync(page, ObservNrc);
+        _logger.LogDebug("Leyendo página {Pagina} de observaciones. Cantidad de filas: {RowCount}", pagina, rowCount);
+
+        var filas = new List<ObservacionItem>();
+        int faltantes = 0;
+
+        for (int i = 1; i <= rowCount; i++)
+        {
+            var observacion = await LeerObservacionAsync(page, i);
+            if (observacion is null)
+            {
+                faltantes++;
+                continue;
+            }
+
+            filas.Add(observacion);
+        }
+
+        return (filas, faltantes);
+    }
+
+    private static async Task<ObservacionItem?> LeerObservacionAsync(IPage page, int fila)
+    {
+        var fecha = await GeneXusGrid.LeerCampoAsync(page, ObservFila, fila);
+        if (fecha is null)
+        {
+            return null;
+        }
+
+        return new ObservacionItem
+        {
+            FechaHora = fecha,
+            Descripcion = await GeneXusGrid.LeerCampoAsync(page, "W0050EXPOBSERVACIONES", fila) ?? string.Empty,
+            Usuario = await GeneXusGrid.LeerCampoAsync(page, "W0050EXPOBSERVUSUNOMBRE", fila) ?? string.Empty,
+            Oficina = await GeneXusGrid.LeerCampoAsync(page, "W0050EXPOBSERVOFINOMBRECOMPLETO", fila) ?? string.Empty
+        };
+    }
+
+    private static async Task<bool> EsUltimaPaginaObservacionesAsync(IPage page) =>
+        (await LeerCampoAsync(page, "W0050Gridobserv_nEOF"))?.Trim() == "1";
 }
