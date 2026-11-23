@@ -83,7 +83,7 @@ public partial class MainWindow : Window
 
             if (result == null)
             {
-                MessageBox.Show("Expediente no encontrado.");
+                await Mensajes.AvisoAsync("Expediente no encontrado.");
                 return;
             }
 
@@ -104,12 +104,12 @@ public partial class MainWindow : Window
         }
         catch (ArgumentException ex)
         {
-            MessageBox.Show(ex.Message);
+            await Mensajes.AvisoAsync(ex.Message);
         }
         catch (Exception ex)
         {
             // BusquedaService ya registra el error en el log
-            MessageBox.Show($"Error al buscar: {ex.Message}");
+            await Mensajes.ErrorAsync($"Error al buscar: {ex.Message}");
         }
         finally
         {
@@ -149,7 +149,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error al cargar el historial: {ex.Message}");
+            await Mensajes.ErrorAsync($"Error al cargar el historial: {ex.Message}");
         }
     }
 
@@ -330,11 +330,11 @@ public partial class MainWindow : Window
     // Muestra por que el expediente no esta disponible y ofrece abrir su busqueda completa con un click (Enter = Si)
     private async Task OfrecerBusquedaAsync(string nroExpediente, string motivo)
     {
-        var respuesta = MessageBox.Show(
+        var buscar = await Mensajes.ConfirmarAsync(
             $"{motivo}\n\n¿Desea realizar la búsqueda del expediente?",
-            "Expediente no disponible", MessageBoxButton.YesNo, MessageBoxImage.Information);
+            "Expediente no disponible", MessageBoxImage.Information);
 
-        if (respuesta == MessageBoxResult.Yes)
+        if (buscar)
         {
             await EjecutarBusquedaAsync(nroExpediente.Trim());
         }
@@ -352,7 +352,7 @@ public partial class MainWindow : Window
 
         if (string.IsNullOrWhiteSpace(nro))
         {
-            MessageBox.Show("Nro de Expediente requerido.");
+            await Mensajes.AvisoAsync("Nro de Expediente requerido.");
             return;
         }
 
@@ -362,7 +362,7 @@ public partial class MainWindow : Window
         }
         catch (ArgumentException ex)
         {
-            MessageBox.Show(ex.Message);
+            await Mensajes.AvisoAsync(ex.Message);
             return;
         }
 
@@ -375,7 +375,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error al buscar el expediente: {ex.Message}");
+            await Mensajes.ErrorAsync($"Error al buscar el expediente: {ex.Message}");
             ConfirmarPaseButton.IsEnabled = true;
             return;
         }
@@ -384,7 +384,7 @@ public partial class MainWindow : Window
 
         if (preparacion == null)
         {
-            MessageBox.Show("Expediente no encontrado.");
+            await Mensajes.AvisoAsync("Expediente no encontrado.");
             return;
         }
 
@@ -394,11 +394,11 @@ public partial class MainWindow : Window
             return;
         }
 
-        var respuesta = MessageBox.Show(
+        var cancelar = await Mensajes.ConfirmarAsync(
             $"¿Cancelar el pase del expediente {pendiente.NroExpediente} hacia {pendiente.OficinaDestino} con {pendiente.FoliosPase} folios?",
-            "Cancelar pase", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            "Cancelar pase");
 
-        if (respuesta != MessageBoxResult.Yes)
+        if (!cancelar)
         {
             return;
         }
@@ -430,13 +430,13 @@ public partial class MainWindow : Window
             (string.IsNullOrWhiteSpace(FoliosTotalBox.Text) && string.IsNullOrWhiteSpace(FoliosNuevosBox.Text)) ||
             string.IsNullOrWhiteSpace(ObservacionesPaseBox.Text))
         {
-            MessageBox.Show("Todos los campos son requeridos.");
+            await Mensajes.AvisoAsync("Todos los campos son requeridos.");
             return;
         }
 
         if(_oficinaSeleccionadaPase is not OficinaOption oficinaSeleccionada)
         {
-            MessageBox.Show("Seleccione una Oficina Valida");
+            await Mensajes.AvisoAsync("Seleccione una Oficina Valida");
             return;
         }
 
@@ -448,7 +448,7 @@ public partial class MainWindow : Window
         }
         catch (ArgumentException ex)
         {
-            MessageBox.Show(ex.Message);
+            await Mensajes.AvisoAsync(ex.Message);
             return;
         }
 
@@ -461,14 +461,14 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error al buscar el expediente: {ex.Message}");
+            await Mensajes.ErrorAsync($"Error al buscar el expediente: {ex.Message}");
             ConfirmarPaseButton.IsEnabled = true;
             return;
         }
 
         if (result == null)
         {
-            MessageBox.Show("Expediente no encontrado.");
+            await Mensajes.AvisoAsync("Expediente no encontrado.");
             ConfirmarPaseButton.IsEnabled = true;
             return;
         }
@@ -487,13 +487,13 @@ public partial class MainWindow : Window
         {
             if (!int.TryParse(FoliosTotalBox.Text, out totalFolios))
             {
-                MessageBox.Show("Folios Total debe ser un numero valido.");
+                await Mensajes.AvisoAsync("Folios Total debe ser un numero valido.");
                 ConfirmarPaseButton.IsEnabled = true;
                 return;
             }
             if (totalFolios < result.FolioActual)
             {
-                MessageBox.Show($"Folios Total debe ser mayor o igual a los que muestra el sistema: {result.FolioActual} Folios");
+                await Mensajes.AvisoAsync($"Folios Total debe ser mayor o igual a los que muestra el sistema: {result.FolioActual} Folios");
                 ConfirmarPaseButton.IsEnabled = true;
                 return;
             }
@@ -502,7 +502,7 @@ public partial class MainWindow : Window
         {
             if (!int.TryParse(FoliosNuevosBox.Text, out var nuevos))
             {
-                MessageBox.Show("Folios Nuevos debe ser un numero valido.");
+                await Mensajes.AvisoAsync("Folios Nuevos debe ser un numero valido.");
                 ConfirmarPaseButton.IsEnabled = true;
                 return;
             }
@@ -529,17 +529,17 @@ public partial class MainWindow : Window
 
             if (MismaOficina(pendiente.OficinaDestino, oficinaSeleccionada.Nombre))
             {
-                MessageBox.Show($"El expediente ya tiene un pase hacia esa oficina con {pendiente.FoliosPase} folios.");
+                await Mensajes.AvisoAsync($"El expediente ya tiene un pase hacia esa oficina con {pendiente.FoliosPase} folios.");
                 return;
             }
 
-            var respuesta = MessageBox.Show(
+            var corregir = await Mensajes.ConfirmarAsync(
                 $"El expediente {pendiente.NroExpediente} ya tiene un pase hacia {pendiente.OficinaDestino} con {pendiente.FoliosPase} folios.\n\n" +
                 $"¿Cancelar ese pase y enviarlo a {oficinaSeleccionada.Nombre} con {totalFolios} folios?\n\n" +
                 $"Observaciones: {ObservacionesPaseBox.Text}",
-                "Corregir pase", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                "Corregir pase");
 
-            if (respuesta != MessageBoxResult.Yes)
+            if (!corregir)
             {
                 return;
             }
@@ -745,13 +745,13 @@ public partial class MainWindow : Window
             (string.IsNullOrWhiteSpace(ResolucionFoliosTotalBox.Text) && string.IsNullOrWhiteSpace(ResolucionFoliosNuevosBox.Text)) ||
             string.IsNullOrWhiteSpace(ObservacionesResolucionBox.Text))
         {
-            MessageBox.Show("Todos los campos son requeridos.");
+            await Mensajes.AvisoAsync("Todos los campos son requeridos.");
             return;
         }
 
         if (_oficinaSeleccionadaResolucion is not OficinaOption oficinaSeleccionada)
         {
-            MessageBox.Show("Seleccione una Oficina Valida");
+            await Mensajes.AvisoAsync("Seleccione una Oficina Valida");
             return;
         }
 
@@ -763,7 +763,7 @@ public partial class MainWindow : Window
         }
         catch (ArgumentException ex)
         {
-            MessageBox.Show(ex.Message);
+            await Mensajes.AvisoAsync(ex.Message);
             return;
         }
 
@@ -776,14 +776,14 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error al buscar el expediente: {ex.Message}");
+            await Mensajes.ErrorAsync($"Error al buscar el expediente: {ex.Message}");
             ConfirmarResolucionButton.IsEnabled = true;
             return;
         }
 
         if (result == null)
         {
-            MessageBox.Show("Expediente no encontrado en la cola de Resoluciones.");
+            await Mensajes.AvisoAsync("Expediente no encontrado en la cola de Resoluciones.");
             ConfirmarResolucionButton.IsEnabled = true;
             return;
         }
@@ -794,7 +794,7 @@ public partial class MainWindow : Window
         {
             if (!int.TryParse(ResolucionFoliosTotalBox.Text, out totalFolios))
             {
-                MessageBox.Show("Folios Total debe ser un numero valido.");
+                await Mensajes.AvisoAsync("Folios Total debe ser un numero valido.");
                 ConfirmarResolucionButton.IsEnabled = true;
                 return;
             }
@@ -803,7 +803,7 @@ public partial class MainWindow : Window
         {
             if (!int.TryParse(ResolucionFoliosNuevosBox.Text, out var nuevos))
             {
-                MessageBox.Show("Folios Nuevos debe ser un numero valido.");
+                await Mensajes.AvisoAsync("Folios Nuevos debe ser un numero valido.");
                 ConfirmarResolucionButton.IsEnabled = true;
                 return;
             }
@@ -814,7 +814,7 @@ public partial class MainWindow : Window
         {
             if (result.ResolucionesAnteriores[i]!.Contains($"{NroResolucionBox.Text}/", StringComparison.OrdinalIgnoreCase))
             {
-                MessageBox.Show("Numero de Resolucion ya fue cargado al expediente");
+                await Mensajes.AvisoAsync("Numero de Resolucion ya fue cargado al expediente");
                 ConfirmarResolucionButton.IsEnabled = true;
                 return;
             }
@@ -822,7 +822,7 @@ public partial class MainWindow : Window
 
         if (FechaResolucionBox.Value is null)
         {
-            MessageBox.Show("Debe seleccionar una fecha de resolucion.");
+            await Mensajes.AvisoAsync("Debe seleccionar una fecha de resolucion.");
             ConfirmarResolucionButton.IsEnabled = true;
             return;
         }
@@ -905,8 +905,7 @@ public partial class MainWindow : Window
     private async Task MostrarAvisoAsync(int tab, string mensaje, bool esError, bool fijo)
     {
         var aviso = ObtenerAviso(tab);
-        aviso.Borde.Background = esError ? new SolidColorBrush(Color.FromRgb(0xC0, 0x39, 0x2B))
-                                         : new SolidColorBrush(Color.FromRgb(0x2E, 0x8B, 0x57));
+        aviso.Borde.Background = (Brush)FindResource(esError ? "ErrorBrush" : "ExitoBrush");
         aviso.Texto.Text = fijo ? $"{DateTime.Now:HH:mm}  {mensaje}" : mensaje;
         int version = ++aviso.Version;
         ActualizarAvisos();
@@ -932,7 +931,7 @@ public partial class MainWindow : Window
             return existente;
         }
 
-        var texto = new TextBlock { Foreground = Brushes.White, TextWrapping = TextWrapping.Wrap, FontSize = 13 };
+        var texto = new TextBlock { Foreground = (Brush)FindResource("TextoSobreColorBrush"), TextWrapping = TextWrapping.Wrap, FontSize = 13 };
         var borde = new Border
         {
             HorizontalAlignment = HorizontalAlignment.Right,
@@ -1081,7 +1080,7 @@ public partial class MainWindow : Window
 
         if (string.IsNullOrWhiteSpace(RecepNroExpedienteBox.Text))
         {
-            MessageBox.Show("Nro de Expediente requerido.");
+            await Mensajes.AvisoAsync("Nro de Expediente requerido.");
             return;
         }
 
@@ -1093,7 +1092,7 @@ public partial class MainWindow : Window
         }
         catch (ArgumentException ex)
         {
-            MessageBox.Show(ex.Message);
+            await Mensajes.AvisoAsync(ex.Message);
             return;
         }
 
@@ -1106,7 +1105,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error al buscar: {ex.Message}");
+            await Mensajes.ErrorAsync($"Error al buscar: {ex.Message}");
             setRecepButtonEnabled(true);
             return;
         }
@@ -1118,7 +1117,7 @@ public partial class MainWindow : Window
 
         if (item == null)
         {
-            MessageBox.Show("Expediente no encontrado para Recepcion.");
+            await Mensajes.AvisoAsync("Expediente no encontrado para Recepcion.");
             setRecepButtonEnabled(true);
             return;
         }
@@ -1171,13 +1170,13 @@ public partial class MainWindow : Window
 
         if (string.IsNullOrWhiteSpace(oficina))
         {
-            MessageBox.Show("Ingrese una oficina.");
+            await Mensajes.AvisoAsync("Ingrese una oficina.");
             return;
         }
 
         if (_oficinaSeleccionadaRecepcion is not OficinaOption oficinaSeleccionada)
         {
-            MessageBox.Show("Seleccione una Oficina Valida");
+            await Mensajes.AvisoAsync("Seleccione una Oficina Valida");
             return;
         }
 
@@ -1195,16 +1194,16 @@ public partial class MainWindow : Window
 
             if (listado.FilasFaltantes > 0)
             {
-                MessageBox.Show($"{listado.FilasFaltantes} expedientes no terminaron de cargar y no aparecen en la lista. Vuelva a buscar.");
+                await Mensajes.AvisoAsync($"{listado.FilasFaltantes} expedientes no terminaron de cargar y no aparecen en la lista. Vuelva a buscar.");
             }
             else if (_recepcionEncontrados.Count == 0)
             {
-                MessageBox.Show("No se encontraron expedientes para esa oficina.");
+                await Mensajes.AvisoAsync("No se encontraron expedientes para esa oficina.");
             }
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error al buscar: {ex.Message}");
+            await Mensajes.ErrorAsync($"Error al buscar: {ex.Message}");
         }
         finally
         {
@@ -1222,7 +1221,7 @@ public partial class MainWindow : Window
 
         if (seleccionados.Count == 0)
         {
-            MessageBox.Show("No hay expedientes seleccionados.");
+            await Mensajes.AvisoAsync("No hay expedientes seleccionados.");
             return;
         }
 
@@ -1249,7 +1248,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error al recibir seleccionados: {ex.Message}");
+            await Mensajes.ErrorAsync($"Error al recibir seleccionados: {ex.Message}");
             setRecepButtonEnabled(true);
         }
     }

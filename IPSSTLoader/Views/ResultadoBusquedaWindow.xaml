@@ -1,4 +1,4 @@
-﻿<Window x:Class="IPSST.Views.ResultadoBusquedaWindow"
+<Window x:Class="IPSST.Views.ResultadoBusquedaWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Resultado de Busqueda" Height="720" Width="900" MinHeight="450" MinWidth="700"
@@ -8,7 +8,7 @@
         <!-- Datos principales: Causante, Asunto, Oficina, Folios -->
         <Style x:Key="EtiquetaPrincipal" TargetType="TextBlock">
             <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Foreground" Value="#555555"/>
+            <Setter Property="Foreground" Value="{StaticResource TextoSecundarioBrush}"/>
             <Setter Property="Margin" Value="0,4,12,4"/>
             <Setter Property="VerticalAlignment" Value="Top"/>
         </Style>
@@ -22,12 +22,12 @@
         <!-- Datos secundarios: se mantienen pero con menos peso visual -->
         <Style x:Key="EtiquetaSecundaria" TargetType="TextBlock">
             <Setter Property="FontSize" Value="11"/>
-            <Setter Property="Foreground" Value="#888888"/>
+            <Setter Property="Foreground" Value="{StaticResource TextoTenueBrush}"/>
             <Setter Property="Margin" Value="0,1,6,1"/>
         </Style>
         <Style x:Key="ValorSecundario" TargetType="TextBlock">
             <Setter Property="FontSize" Value="11"/>
-            <Setter Property="Foreground" Value="#444444"/>
+            <Setter Property="Foreground" Value="{StaticResource TextoValorSecundarioBrush}"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
             <Setter Property="Margin" Value="0,1,18,1"/>
         </Style>
@@ -48,7 +48,7 @@
         <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,10">
             <TextBlock Text="Expediente: " FontWeight="Bold" FontSize="16" VerticalAlignment="Center"/>
             <TextBlock x:Name="NroExpedienteText" FontSize="16" VerticalAlignment="Center"
-                       Cursor="Hand" TextDecorations="Underline" Foreground="Blue"
+                       Cursor="Hand" TextDecorations="Underline" Foreground="{StaticResource EnlaceBrush}"
                        MouseLeftButtonDown="NroExpedienteText_MouseLeftButtonDown"
                        ToolTip="Click para copiar"/>
         </StackPanel>
@@ -75,7 +75,7 @@
             <TextBlock Text="Oficina:" Grid.Row="2" Grid.Column="0" Style="{StaticResource EtiquetaPrincipal}"/>
             <StackPanel Grid.Row="2" Grid.Column="1">
                 <TextBlock x:Name="OficinaText" Style="{StaticResource ValorPrincipal}"/>
-                <TextBlock x:Name="OficinaDestinoText" FontSize="13" Foreground="#B35900" TextWrapping="Wrap"
+                <TextBlock x:Name="OficinaDestinoText" FontSize="13" Foreground="{StaticResource AdvertenciaBrush}" TextWrapping="Wrap"
                            Margin="0,0,0,4" Visibility="Collapsed"/>
             </StackPanel>
 
@@ -100,14 +100,14 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Text="Trabajado por:" Grid.Column="0" FontSize="13" Foreground="#555555"
+            <TextBlock Text="Trabajado por:" Grid.Column="0" FontSize="13" Foreground="{StaticResource TextoSecundarioBrush}"
                        VerticalAlignment="Center" Margin="0,0,12,0"/>
             <Grid Grid.Column="1">
                 <Button x:Name="ConsultarTrabajadoPorButton" Content="Consultar" Padding="10,2"
                         HorizontalAlignment="Left" Click="ConsultarTrabajadoPorButton_Click"/>
                 <TextBlock x:Name="TrabajadoPorText" FontSize="13" FontWeight="SemiBold"
                            VerticalAlignment="Center" Visibility="Collapsed"/>
-                <TextBlock x:Name="TrabajadoPorNoAplicaText" FontSize="12" Foreground="#888888" VerticalAlignment="Center"
+                <TextBlock x:Name="TrabajadoPorNoAplicaText" FontSize="12" Foreground="{StaticResource TextoTenueBrush}" VerticalAlignment="Center"
                            Text="No aplica: el expediente no está en la oficina" Visibility="Collapsed"/>
             </Grid>
         </Grid>
@@ -159,8 +159,8 @@
         </DataGrid>
 
         <Popup x:Name="NotificationPopup" Placement="Mouse" AllowsTransparency="True" PopupAnimation="Fade">
-            <Border Background="#333" CornerRadius="4" Padding="8,4">
-                <TextBlock x:Name="PopupText" Foreground="White" FontSize="12"/>
+            <Border Background="{StaticResource GloboFondoBrush}" CornerRadius="4" Padding="8,4">
+                <TextBlock x:Name="PopupText" Foreground="{StaticResource TextoSobreColorBrush}" FontSize="12"/>
             </Border>
         </Popup>
     </Grid>

@@ -40,7 +40,7 @@ namespace IPSST
             {
                 // Sin esto la app queda abierta sin ventanas (ShutdownMode = OnExplicitShutdown)
                 Log.Fatal(ex, "Error al iniciar la aplicacion");
-                MessageBox.Show($"No se pudo iniciar la aplicacion: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                await Mensajes.ErrorAsync($"No se pudo iniciar la aplicacion: {ex.Message}");
                 Shutdown();
             }
         }
@@ -78,7 +78,7 @@ namespace IPSST
                 if (!loggedIn)
                 {
                     Log.Warning("Intento de login fallido para el usuario {Username}", loginWindow.Username);
-                    MessageBox.Show("Usuario o contraseña incorrectos. Intente nuevamente");
+                    await Mensajes.AvisoAsync("Usuario o contraseña incorrectos. Intente nuevamente");
                 }
 
                 loginWindowUsuario = loginWindow.Username;
@@ -145,8 +145,9 @@ namespace IPSST
             DispatcherUnhandledException += (s, args) =>
             {
                 Log.Fatal(args.Exception, "Excepción no controlada en el hilo de la interfaz de usuario");
-                MessageBox.Show("Ocurrió un error inesperado, Revise el archivo de log para mas detalles.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                // Handled antes del mensaje: el evento no espera tareas
                 args.Handled = true;
+                _ = Mensajes.ErrorAsync("Ocurrió un error inesperado, Revise el archivo de log para mas detalles.");
             };
 
             //Error no manejado fuera del hilo de UI

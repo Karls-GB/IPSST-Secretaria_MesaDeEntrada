@@ -41,7 +41,7 @@ public partial class ResultadoBusquedaWindow : Window
         FoliosText.Text = resultado.Folios?.ToString() ?? "-";
 
         var conPase = resultado.EnTransito && !string.IsNullOrWhiteSpace(resultado.OficinaDestino);
-        OficinaDestinoText.Text = conPase ? $"Con pase en tránsito a {resultado.OficinaDestino}" : string.Empty;
+        OficinaDestinoText.Text = conPase ? $"Con pase {resultado.OficinaDestino}" : string.Empty;
         OficinaDestinoText.Visibility = conPase ? Visibility.Visible : Visibility.Collapsed;
 
         // Primera observacion
@@ -109,7 +109,7 @@ public partial class ResultadoBusquedaWindow : Window
                 return;
             }
 
-            MessageBox.Show(this, $"Error al consultar quién trabaja el expediente: {ex.Message}");
+            await Mensajes.ErrorAsync($"Error al consultar quién trabaja el expediente: {ex.Message}", this);
             ConsultarTrabajadoPorButton.Content = "Consultar";
             ConsultarTrabajadoPorButton.IsEnabled = true;
         }
@@ -151,7 +151,7 @@ public partial class ResultadoBusquedaWindow : Window
                 return;
             }
 
-            MessageBox.Show(this, $"Error al cargar las observaciones: {ex.Message}");
+            await Mensajes.ErrorAsync($"Error al cargar las observaciones: {ex.Message}", this);
             CargarTodasButton.Content = "Cargar todas";
             CargarTodasButton.IsEnabled = true;
         }
