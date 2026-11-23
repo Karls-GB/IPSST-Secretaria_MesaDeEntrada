@@ -12,7 +12,7 @@ using System.Windows.Shapes;
 
 namespace IPSST.Views;
 
-public partial class LoginWindow : Window
+public partial class LoginWindow : Wpf.Ui.Controls.FluentWindow
 {
     public string Username { get; private set; } = string.Empty;
     public string Password { get; private set; } = string.Empty;
