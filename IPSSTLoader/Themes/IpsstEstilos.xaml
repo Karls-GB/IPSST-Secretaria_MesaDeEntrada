@@ -34,6 +34,55 @@
         </Setter>
     </Style>
 
+    <!-- Grillas (implicito, aplica a todos los DataGrid): borde, encabezado gris, filas alternadas -->
+    <Style TargetType="DataGrid" BasedOn="{StaticResource {x:Type DataGrid}}">
+        <Setter Property="Background" Value="{StaticResource SuperficieBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource GrillaBordeBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="RowBackground" Value="{StaticResource SuperficieBrush}"/>
+        <Setter Property="AlternatingRowBackground" Value="{StaticResource GrillaFilaAlternaBrush}"/>
+        <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+        <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource GrillaLineaBrush}"/>
+        <Setter Property="ColumnHeaderStyle">
+            <Setter.Value>
+                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                    <Setter Property="Background" Value="{StaticResource GrillaEncabezadoBrush}"/>
+                    <Setter Property="BorderBrush" Value="{StaticResource GrillaBordeBrush}"/>
+                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                    <!-- Al cambiar el estilo del encabezado se pierden margen y negrita de WPF-UI: se reponen -->
+                    <Setter Property="Padding" Value="8,7"/>
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                    <Setter Property="Foreground" Value="{StaticResource TextoBrush}"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                </Style>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Lista de sugerencias del autocompletado de oficinas (dentro de un Popup con AllowsTransparency) -->
+    <Style x:Key="IpsstSugerencias" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource SuperficieBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BordeControlBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="4"/>
+        <!-- Margen para que la sombra no se corte -->
+        <Setter Property="Margin" Value="0,2,8,8"/>
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect BlurRadius="8" ShadowDepth="2" Opacity="0.2"/>
+            </Setter.Value>
+        </Setter>
+        <Style.Resources>
+            <!-- Items compactos: entran mas oficinas a la vista -->
+            <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                <Setter Property="Padding" Value="10,5"/>
+                <Setter Property="MinHeight" Value="0"/>
+            </Style>
+        </Style.Resources>
+    </Style>
+
     <!-- Pestaña: texto gris; la activa en azul con una linea con el degradé -->
     <!-- El color/peso va SOLO en el encabezado: si se pone en el TabItem, lo hereda todo el contenido -->
     <Style x:Key="IpsstTabItem" TargetType="TabItem">

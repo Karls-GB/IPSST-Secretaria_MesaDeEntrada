@@ -45,6 +45,12 @@
     <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#FFFFFF"/>
     <SolidColorBrush x:Key="TextControlElevationBorderBrush" Color="#9AA3B2"/>
 
+    <!-- Grillas (DataGrid): que se distingan de la tarjeta blanca -->
+    <SolidColorBrush x:Key="GrillaBordeBrush" Color="#C9D0DB"/>
+    <SolidColorBrush x:Key="GrillaEncabezadoBrush" Color="#EDF0F5"/>
+    <SolidColorBrush x:Key="GrillaFilaAlternaBrush" Color="#F7F8FB"/>
+    <SolidColorBrush x:Key="GrillaLineaBrush" Color="#E3E7EE"/>
+
     <!-- Estados -->
     <SolidColorBrush x:Key="ExitoBrush" Color="#2E7D32"/>
     <SolidColorBrush x:Key="ErrorBrush" Color="#B3261E"/>

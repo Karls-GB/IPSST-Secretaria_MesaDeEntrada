@@ -228,6 +228,10 @@ namespace IPSST
                 ?? new Dictionary<string, ResolucionDefaultConfig>();
             services.AddSingleton(resolucionDefaults);
 
+            // Ojo: en el archivo del usuario, una lista pisa por posicion (no reemplaza la lista entera)
+            services.AddSingleton(new OficinasFrecuentesConfig(
+                configuration.GetSection("OficinasFrecuentes").Get<List<string>>()));
+
             services.AddLogging(builder =>
             {
                 builder.ClearProviders();

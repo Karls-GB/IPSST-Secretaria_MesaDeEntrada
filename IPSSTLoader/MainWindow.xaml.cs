@@ -192,9 +192,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             return;
         }
 
-        var filtradas = _oficinaCacheService.Oficinas
-            .Where(o => o.Nombre.Contains(texto, StringComparison.OrdinalIgnoreCase))
-            .ToList();
+        // Frecuentes primero (ver OficinasFrecuentes en appsettings.json)
+        var filtradas = _oficinaCacheService.Filtrar(texto);
 
         OficinaSuggestionsListBox.ItemsSource = filtradas;
         OficinaPopup.IsOpen = filtradas.Count > 0;
@@ -300,7 +299,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         _actualizandoFoliosDesdePrograma = false;
     }
 
-    private void FoliosNuevosBox_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+    private void FoliosNuevosBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         if (_actualizandoFoliosDesdePrograma) return;
         _actualizandoFoliosDesdePrograma = true;
@@ -603,9 +602,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             return;
         }
 
-        var filtradas = _oficinaCacheService.Oficinas
-            .Where(o => o.Nombre.Contains(texto, StringComparison.OrdinalIgnoreCase))
-            .ToList();
+        // Frecuentes primero (ver OficinasFrecuentes en appsettings.json)
+        var filtradas = _oficinaCacheService.Filtrar(texto);
 
         ResolucionOficinaSuggestionsListBox.ItemsSource = filtradas;
         ResolucionOficinaPopup.IsOpen = filtradas.Count > 0;
@@ -710,7 +708,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         _actualizandoFoliosDesdePrograma = false;
     }
 
-    private void ResolucionFoliosNuevosBox_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+    private void ResolucionFoliosNuevosBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         if (_actualizandoFoliosDesdePrograma) return;
         _actualizandoFoliosDesdePrograma = true;
@@ -725,10 +723,10 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     {
         if (e.Key != Key.Up && e.Key != Key.Down) return;
 
-        var fechaActual = FechaResolucionBox.Value ?? DateTime.Today;
+        var fechaActual = FechaResolucionBox.SelectedDate ?? DateTime.Today;
         fechaActual = fechaActual.AddDays(e.Key == Key.Up ? 1 : -1);
 
-        FechaResolucionBox.Value = fechaActual;
+        FechaResolucionBox.SelectedDate = fechaActual;
         e.Handled = true;
     }
 
@@ -820,7 +818,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             }
         }
 
-        if (FechaResolucionBox.Value is null)
+        if (FechaResolucionBox.SelectedDate is null)
         {
             await Mensajes.AvisoAsync("Debe seleccionar una fecha de resolucion.");
             ConfirmarResolucionButton.IsEnabled = true;
@@ -831,7 +829,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             ResolucionNroExpedienteBox.Text,
             result.Causante,
             NroResolucionBox.Text,
-            FechaResolucionBox.Text,
+            FechaResolucionBox.SelectedDate.Value.ToString("dd/MM/yyyy"),
             ObservacionesResolucionBox.Text,
             oficinaSeleccionada.Nombre,
             totalFolios,
@@ -858,7 +856,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             Resolucion = new ResolucionData
             {
                 NroResolucion = NroResolucionBox.Text,
-                FechaResolucion = FechaResolucionBox.Value.Value,
+                FechaResolucion = FechaResolucionBox.SelectedDate.Value,
                 Observaciones = ObservacionesResolucionBox.Text
             }
         };
@@ -975,9 +973,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             return;
         }
 
-        var filtradas = _oficinaCacheService.Oficinas
-            .Where(o => o.Nombre.Contains(texto, StringComparison.OrdinalIgnoreCase))
-            .ToList();
+        // Frecuentes primero (ver OficinasFrecuentes en appsettings.json)
+        var filtradas = _oficinaCacheService.Filtrar(texto);
 
         RecepOficinaSuggestionsListBox.ItemsSource = filtradas;
         RecepOficinaPopup.IsOpen = filtradas.Count > 0;
@@ -1237,7 +1234,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
         NroExpedienteBox.Focus();
-        FechaResolucionBox.Value = DateTime.Today;
+        FechaResolucionBox.SelectedDate = DateTime.Today;
     }
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)

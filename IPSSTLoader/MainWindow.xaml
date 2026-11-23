@@ -2,7 +2,6 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:local="clr-namespace:IPSST"
@@ -92,8 +91,8 @@
                                     GotMouseCapture="OficinaTextBox_GotMouseCapture"/>
 
                             <Popup x:Name="OficinaPopup" PlacementTarget="{Binding ElementName=OficinaTextBox}"
-                                    Placement="Bottom" Width="525" StaysOpen="False">
-                                <Border Background="{StaticResource SuperficieBrush}" BorderBrush="{StaticResource BordeControlBrush}" BorderThickness="1">
+                                    Placement="Bottom" Width="525" StaysOpen="False" AllowsTransparency="True">
+                                <Border Style="{StaticResource IpsstSugerencias}">
                                     <ListBox x:Name="OficinaSuggestionsListBox" MaxHeight="200"
                                             DisplayMemberPath="Nombre"
                                             PreviewMouseLeftButtonUp="OficinaSuggestionsListBox_PreviewMouseLeftButtonUp"/>
@@ -103,10 +102,12 @@
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Grid.Row="3" Margin="0,0,0,10">
-                        <TextBlock Text="Folios Nuevos:" VerticalAlignment="Center" Width="90" Margin="0,0,10,0"/>
-                        <xctk:IntegerUpDown x:Name="FoliosNuevosBox" Width="80" Minimum="0" Maximum="999" AllowTextInput="True" ValueChanged="FoliosNuevosBox_ValueChanged"/>
-                        <TextBlock Text="Folios Total:" VerticalAlignment="Center" Width="72" Margin="20,0,0,0"/>
-                        <TextBox x:Name="FoliosTotalBox" Width="80" TextChanged="FoliosTotalBox_TextChanged"/>
+                        <TextBlock Text="Folios Nuevos:" VerticalAlignment="Center" Width="120"/>
+                        <ui:NumberBox x:Name="FoliosNuevosBox" Width="130" Minimum="0" Maximum="999" MaxDecimalPlaces="0"
+                                      SmallChange="1" SpinButtonPlacementMode="Inline" ClearButtonEnabled="False"
+                                      TextChanged="FoliosNuevosBox_TextChanged"/>
+                        <TextBlock Text="Folios Total:" VerticalAlignment="Center" Margin="24,0,10,0"/>
+                        <TextBox x:Name="FoliosTotalBox" Width="100" TextChanged="FoliosTotalBox_TextChanged"/>
                     </StackPanel>
 
                     <TextBlock Text="Observaciones:" Grid.Row="4" Margin="0,0,0,5"/>
@@ -153,10 +154,10 @@
 
                     <StackPanel Orientation="Horizontal" Grid.Row="3" Margin="0,0,0,10">
                         <TextBlock Text="Fecha Resolucion:" VerticalAlignment="Center" Width="120"/>
-                        <xctk:DateTimePicker x:Name="FechaResolucionBox" Width="200" VerticalAlignment="Center" 
-                                             Format="Custom" FormatString="dd/MM/yyyy"
-                                             AllowTextInput="False"
-                                             PreviewKeyDown="FechaResolucionBox_PreviewKeyDown"/>
+                        <!-- es-AR: formato dd/MM/yyyy sin importar el idioma de Windows. Arriba/Abajo suma/resta un dia -->
+                        <DatePicker x:Name="FechaResolucionBox" Width="200" VerticalAlignment="Center"
+                                    SelectedDateFormat="Short" Language="es-AR"
+                                    PreviewKeyDown="FechaResolucionBox_PreviewKeyDown"/>
                     </StackPanel>
 
                     <TextBlock Text="Observaciones Resolucion:" Grid.Row="4" Margin="0,0,0,5"/>
@@ -176,8 +177,8 @@
                                     GotMouseCapture="ResolucionOficinaTextBox_GotMouseCapture"/>
 
                             <Popup x:Name="ResolucionOficinaPopup" PlacementTarget="{Binding ElementName=ResolucionOficinaTextBox}"
-                                    Placement="Bottom" Width="525" StaysOpen="False">
-                                <Border Background="{StaticResource SuperficieBrush}" BorderBrush="{StaticResource BordeControlBrush}" BorderThickness="1">
+                                    Placement="Bottom" Width="525" StaysOpen="False" AllowsTransparency="True">
+                                <Border Style="{StaticResource IpsstSugerencias}">
                                     <ListBox x:Name="ResolucionOficinaSuggestionsListBox" MaxHeight="200"
                                             DisplayMemberPath="Nombre"
                                             PreviewMouseLeftButtonUp="ResolucionOficinaSuggestionsListBox_PreviewMouseLeftButtonUp"/>
@@ -187,10 +188,12 @@
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Grid.Row="8" Margin="0,0,0,10">
-                        <TextBlock Text="Folios Nuevos:" VerticalAlignment="Center" Width="90" Margin="0,0,10,0"/>
-                        <xctk:IntegerUpDown x:Name="ResolucionFoliosNuevosBox" Width="80" Minimum="0" Maximum="999" AllowTextInput="True" ValueChanged="ResolucionFoliosNuevosBox_ValueChanged"/>
-                        <TextBlock Text="Folios Total:" VerticalAlignment="Center" Width="72" Margin="20,0,0,0"/>
-                        <TextBox x:Name="ResolucionFoliosTotalBox" Width="80" TextChanged="ResolucionFoliosTotalBox_TextChanged"/>
+                        <TextBlock Text="Folios Nuevos:" VerticalAlignment="Center" Width="120"/>
+                        <ui:NumberBox x:Name="ResolucionFoliosNuevosBox" Width="130" Minimum="0" Maximum="999" MaxDecimalPlaces="0"
+                                      SmallChange="1" SpinButtonPlacementMode="Inline" ClearButtonEnabled="False"
+                                      TextChanged="ResolucionFoliosNuevosBox_TextChanged"/>
+                        <TextBlock Text="Folios Total:" VerticalAlignment="Center" Margin="24,0,10,0"/>
+                        <TextBox x:Name="ResolucionFoliosTotalBox" Width="100" TextChanged="ResolucionFoliosTotalBox_TextChanged"/>
                     </StackPanel>
 
                     <TextBlock Text="Observaciones Pase:" Grid.Row="9" Margin="0,0,0,5"/>
@@ -234,8 +237,8 @@
                                    Width="350" VerticalAlignment="Center"/>
                         
                         <Popup x:Name="RecepOficinaPopup" PlacementTarget="{Binding ElementName=RecepOficinaTextBox}"
-                                   Placement="Bottom" Width="350" StaysOpen="False">
-                                <Border Background="{StaticResource SuperficieBrush}" BorderBrush="{StaticResource BordeControlBrush}" BorderThickness="1">
+                                   Placement="Bottom" Width="350" StaysOpen="False" AllowsTransparency="True">
+                                <Border Style="{StaticResource IpsstSugerencias}">
                                     <ListBox x:Name="RecepOficinaSuggestionsListBox" MaxHeight="200"
                                            DisplayMemberPath="Nombre"
                                            PreviewMouseLeftButtonUp="RecepOficinaSuggestionsListBox_PreviewMouseLeftButtonUp"/>
@@ -250,7 +253,7 @@
                     <DataGrid x:Name="RecepOficinaGrid" Grid.Row="3" AutoGenerateColumns="False" CanUserReorderColumns="False"
                               CanUserAddRows="False" CanUserDeleteRows="False" SelectionMode="Single" Margin="0,0,0,10">
                         <DataGrid.Columns>
-                            <DataGridTemplateColumn Header="Recibir" Width="60">
+                            <DataGridTemplateColumn Header="Recibir" Width="75">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                             <CheckBox IsChecked="{Binding Path=Seleccionado, UpdateSourceTrigger=PropertyChanged}"/>
@@ -302,7 +305,7 @@
                     <DataGrid x:Name="HistorialGrid" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True"
                               CanUserAddRows="False" HeadersVisibility="Column" SelectionMode="Single">
                         <DataGrid.RowStyle>
-                            <Style TargetType="DataGridRow">
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding Fallido}" Value="True">
                                         <Setter Property="Foreground" Value="{StaticResource ErrorBrush}"/>
