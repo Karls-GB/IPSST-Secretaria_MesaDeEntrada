@@ -12,7 +12,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
 namespace IPSST.Views;
-public partial class ConfirmarRecepcionMultipleWindow : Window
+public partial class ConfirmarRecepcionMultipleWindow : Wpf.Ui.Controls.FluentWindow
 {
     public ConfirmarRecepcionMultipleWindow(List<RecepcionItem> seleccionados)
     {

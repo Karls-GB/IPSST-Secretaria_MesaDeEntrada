@@ -14,7 +14,7 @@ using System.Windows.Shapes;
 
 namespace IPSST.Views;
 
-public partial class ResultadoBusquedaWindow : Window
+public partial class ResultadoBusquedaWindow : Wpf.Ui.Controls.FluentWindow
 {
     private readonly BusquedaService _busquedaService;
 

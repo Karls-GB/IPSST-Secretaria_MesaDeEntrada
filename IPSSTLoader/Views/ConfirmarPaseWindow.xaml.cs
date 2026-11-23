@@ -12,7 +12,7 @@ using System.Windows.Shapes;
 
 namespace IPSST.Views;
 
-public partial class ConfirmarPaseWindow : Window
+public partial class ConfirmarPaseWindow : Wpf.Ui.Controls.FluentWindow
 {
     public ConfirmarPaseWindow(string nroExpediente, string? causante, string oficina, int totalFolios, string observaciones)
     {

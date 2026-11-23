@@ -12,7 +12,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
 namespace IPSST.Views;
-public partial class ConfirmarRecepcionWindow : Window
+public partial class ConfirmarRecepcionWindow : Wpf.Ui.Controls.FluentWindow
 {
     public ConfirmarRecepcionWindow(RecepcionItem item)
     {
