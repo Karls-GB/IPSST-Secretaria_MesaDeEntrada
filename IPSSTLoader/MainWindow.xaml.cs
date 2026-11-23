@@ -407,6 +407,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 
         try
         {
+            PaseMostrarProgreso($"Cancelando el Pase del Expediente {pendiente.NroExpediente}...");
             await _cancelarPaseWorkflow.CancelarAsync(nro, pendiente.ExpId, pendiente.OficinaDestino, pendiente.Causante);
             await PaseMostrarToastAsync($"Pase del Expediente {pendiente.NroExpediente} cancelado con exito.", esError: false);
         }
@@ -549,6 +550,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 
             try
             {
+                PaseMostrarProgreso($"Corrigiendo el Pase del Expediente {expediente.NroExpediente}: se cancela el pase a {pendiente.OficinaDestino} y se envia a {oficinaSeleccionada.Nombre}...");
                 await _cancelarPaseWorkflow.CancelarYRehacerAsync(expediente, pendiente.ExpId, pendiente.OficinaDestino);
                 await PaseMostrarToastAsync($"Pase del Expediente {expediente.NroExpediente} corregido: enviado a {oficinaSeleccionada.Nombre}.", esError: false);
             }
@@ -579,6 +581,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 
         try
         {
+            PaseMostrarProgreso($"Realizando el Pase del Expediente {expediente.NroExpediente} a {oficinaSeleccionada.Nombre}...");
             await _paseWorkflow.ExecuteAsync(expediente, result.ExpId ?? string.Empty);
             await PaseMostrarToastAsync($"Pase del Expediente {expediente.NroExpediente} realizado con exito.", esError: false);
         }
@@ -877,6 +880,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 
         try
         {
+            ResolucionMostrarProgreso($"Cargando la Resolucion y el Pase del Expediente {expediente.NroExpediente}...");
             await _resolucionWorkflow.ExecuteAsync(expediente, result.ExpId);
             await ResolucionMostrarToastAsync($"Resolucion del Expediente {expediente.NroExpediente} cargada con exito.", esError: false);
         }
@@ -905,31 +909,75 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private Task BusquedaMostrarToastAsync(string mensaje, bool esError) => MostrarAvisoAsync(BusquedaTabIndex, mensaje, esError, fijo: false);
     private Task RecepcionMostrarToastAsync(string mensaje, bool esError) => MostrarAvisoAsync(RecepcionTabIndex, mensaje, esError, fijo: false);
 
+    // "En progreso": mientras se ejecuta Pase, Resolucion o Recepcion. Queda fijo (con indicador animado)
+    // hasta que lo reemplaza el aviso de exito o error de la misma pestaña
+    private void PaseMostrarProgreso(string mensaje) => MostrarAviso(PaseTabIndex, mensaje, TipoAviso.Progreso, fijo: true);
+    private void ResolucionMostrarProgreso(string mensaje) => MostrarAviso(ResolucionTabIndex, mensaje, TipoAviso.Progreso, fijo: true);
+    private void RecepcionMostrarProgreso(string mensaje) => MostrarAviso(RecepcionTabIndex, mensaje, TipoAviso.Progreso, fijo: true);
+
+    private enum TipoAviso { Exito, Error, Progreso }
+
     private Task MostrarAvisoAsync(int tab, string mensaje, bool esError, bool fijo)
     {
+        MostrarAviso(tab, mensaje, esError ? TipoAviso.Error : TipoAviso.Exito, fijo);
+        return Task.CompletedTask;
+    }
+
+    private void MostrarAviso(int tab, string mensaje, TipoAviso tipo, bool fijo)
+    {
         var presenter = ObtenerAviso(tab);
+        var (fondo, texto, borde) = tipo switch
+        {
+            TipoAviso.Error => ("ErrorFondoBrush", "ErrorTextoBrush", "ErrorBrush"),
+            TipoAviso.Progreso => ("ProgresoFondoBrush", "ProgresoTextoBrush", "AcentoBrush"),
+            _ => ("ExitoFondoBrush", "ExitoTextoBrush", "ExitoBrush")
+        };
+
+        object contenido = mensaje;
+        if (tipo == TipoAviso.Progreso)
+        {
+            // Indicador animado + texto. Grid (no StackPanel horizontal) para que el texto pueda pasar de linea
+            var panel = new Grid();
+            panel.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            panel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            panel.Children.Add(new Wpf.Ui.Controls.ProgressRing
+            {
+                IsIndeterminate = true, Width = 16, Height = 16, Margin = new Thickness(0, 0, 10, 0),
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            var textoProgreso = new TextBlock { Text = mensaje, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
+            Grid.SetColumn(textoProgreso, 1);
+            panel.Children.Add(textoProgreso);
+            contenido = panel;
+        }
+
         var aviso = new Wpf.Ui.Controls.Snackbar(presenter)
         {
-            Title = fijo ? DateTime.Now.ToString("HH:mm") : null,
+            // La hora solo en los resultados fijos (Pase y Resolucion); el progreso no la lleva
+            Title = fijo && tipo != TipoAviso.Progreso ? DateTime.Now.ToString("HH:mm") : null,
             MinHeight = 0, // sin hora no queda un espacio vacio
-            Content = mensaje,
-            Appearance = esError ? Wpf.Ui.Controls.ControlAppearance.Danger : Wpf.Ui.Controls.ControlAppearance.Success,
+            Content = contenido,
+            Appearance = tipo switch
+            {
+                TipoAviso.Error => Wpf.Ui.Controls.ControlAppearance.Danger,
+                TipoAviso.Progreso => Wpf.Ui.Controls.ControlAppearance.Info,
+                _ => Wpf.Ui.Controls.ControlAppearance.Success
+            },
             Timeout = fijo ? Timeout.InfiniteTimeSpan : TimeSpan.FromSeconds(5),
             IsCloseButtonEnabled = false,
             Cursor = Cursors.Hand,
             ToolTip = "Click para ocultar",
             // Colores de la paleta encima de los de Appearance
-            Background = (Brush)FindResource(esError ? "ErrorFondoBrush" : "ExitoFondoBrush"),
-            Foreground = (Brush)FindResource(esError ? "ErrorTextoBrush" : "ExitoTextoBrush"),
-            ContentForeground = (Brush)FindResource(esError ? "ErrorTextoBrush" : "ExitoTextoBrush"),
-            BorderBrush = (Brush)FindResource(esError ? "ErrorBrush" : "ExitoBrush")
+            Background = (Brush)FindResource(fondo),
+            Foreground = (Brush)FindResource(texto),
+            ContentForeground = (Brush)FindResource(texto),
+            BorderBrush = (Brush)FindResource(borde)
         };
         aviso.MouseLeftButtonUp += async (s, e) => await presenter.HideCurrent();
 
         // No se espera: con Timeout infinito la tarea no termina hasta que lo reemplace otro aviso
         _ = presenter.ImmediatelyDisplay(aviso);
         ActualizarAvisos();
-        return Task.CompletedTask;
     }
 
     private Wpf.Ui.Controls.SnackbarPresenter ObtenerAviso(int tab)
@@ -1122,6 +1170,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 
         try
         {
+            RecepcionMostrarProgreso($"Recibiendo el expediente {nro}...");
             var admitido = await _recepcionService.ConfirmarIndividualAsync(nro);
 
             if (admitido)
@@ -1224,6 +1273,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         try
         {
             var nrosSeleccionados = seleccionados.Select(r => r.NroExpediente).ToList();
+            RecepcionMostrarProgreso($"Recibiendo {nrosSeleccionados.Count} expediente(s)...");
             var result = await _recepcionService.AdmitBulkAsync(RecepOficinaTextBox.Text, nrosSeleccionados);
             RecepOficinaGrid.ItemsSource = null;
             setRecepButtonEnabled(true);

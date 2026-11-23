@@ -61,6 +61,9 @@
     <SolidColorBrush x:Key="ExitoTextoBrush" Color="#1B4D1F"/>
     <SolidColorBrush x:Key="ErrorFondoBrush" Color="#FBEAEA"/>
     <SolidColorBrush x:Key="ErrorTextoBrush" Color="#7A1A15"/>
+    <!-- Aviso "en progreso" (el borde usa AcentoBrush) -->
+    <SolidColorBrush x:Key="ProgresoFondoBrush" Color="#EAF0F7"/>
+    <SolidColorBrush x:Key="ProgresoTextoBrush" Color="#1F3A5A"/>
 
     <!-- Globo flotante (ej. "Copiado" en el resultado de busqueda) -->
     <SolidColorBrush x:Key="GloboFondoBrush" Color="#333333"/>
