@@ -114,8 +114,11 @@
                     <TextBox x:Name="ObservacionesPaseBox" Grid.Row="5" Height="80" TextWrapping="Wrap"
                             AcceptsReturn="False" Margin="0,0,0,15"/>
 
-                    <ui:Button x:Name="ConfirmarPaseButton" Appearance="Primary" Content="Confirmar" Grid.Row="6" Width="120" Padding="10,5"
-                            HorizontalAlignment="Left" Click="ConfirmarPaseButton_Click"/>
+                    <!-- Contenedor del boton: se deshabilita mientras hay una operacion en curso (bloqueo global) -->
+                    <Border x:Name="PaseAccion" Grid.Row="6" HorizontalAlignment="Left">
+                        <ui:Button x:Name="ConfirmarPaseButton" Appearance="Primary" Content="Confirmar" Width="120" Padding="10,5"
+                                   Click="ConfirmarPaseButton_Click"/>
+                    </Border>
                 </Grid>
                 </ScrollViewer>
             </TabItem>
@@ -201,8 +204,10 @@
                     <TextBox x:Name="ObservacionesPase2Box" Grid.Row="10" Height="80" TextWrapping="Wrap"
                             AcceptsReturn="False" Margin="0,0,0,15" Text="P/T"/>
                     
-                    <ui:Button x:Name="ConfirmarResolucionButton" Appearance="Primary" Content="Confirmar" Grid.Row="11" Width="120" Padding="10,5"
-                            HorizontalAlignment="Left" Click="ConfirmarResolucionButton_Click"/>
+                    <Border x:Name="ResolucionAccion" Grid.Row="11" HorizontalAlignment="Left">
+                        <ui:Button x:Name="ConfirmarResolucionButton" Appearance="Primary" Content="Confirmar" Width="120" Padding="10,5"
+                                   Click="ConfirmarResolucionButton_Click"/>
+                    </Border>
                 </Grid>
                 </ScrollViewer>
             </TabItem>
@@ -220,8 +225,10 @@
                     <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,10">
                         <TextBlock Text="Nro. Expediente:" VerticalAlignment="Center" Margin="0,0,10,0"/>
                         <TextBox x:Name="RecepNroExpedienteBox" Width="250" VerticalAlignment="Center" TextChanged="RecepNroExpedienteBox_TextChanged"/>
-                        <ui:Button x:Name="RecepBuscarButton" Appearance="Primary" Content="Recibir" Margin="10,0,0,0"
-                                Padding="15,5" Click="RecepBuscarButton_Click"/>
+                        <Border x:Name="RecepAccionNro" Margin="10,0,0,0">
+                            <ui:Button x:Name="RecepBuscarButton" Appearance="Primary" Content="Recibir"
+                                       Padding="15,5" Click="RecepBuscarButton_Click"/>
+                        </Border>
                         <ProgressBar x:Name="RecepBuscandoProgressBar" IsIndeterminate="True" Width="120" Height="18"
                                      Margin="15,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/>
                         <TextBlock x:Name="RecepBuscandoText" Text="Recibiendo..." VerticalAlignment="Center"
@@ -245,8 +252,10 @@
                                            PreviewMouseLeftButtonUp="RecepOficinaSuggestionsListBox_PreviewMouseLeftButtonUp"/>
                                 </Border>
                             </Popup>
-                        <Button x:Name="RecepOficinaBuscarButton" Content="Buscar" Margin="10,0,0,0"
-                                Padding="15,5" Click="RecepOficinaBuscarButton_Click"/>
+                        <Border x:Name="RecepAccionOficina" Margin="10,0,0,0">
+                            <Button x:Name="RecepOficinaBuscarButton" Content="Buscar"
+                                    Padding="15,5" Click="RecepOficinaBuscarButton_Click"/>
+                        </Border>
                         <ProgressBar x:Name="RecepOficinaBuscandoProgressBar" IsIndeterminate="True" Width="120" Height="18"
                                      Margin="15,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/>
                     </StackPanel>
@@ -269,8 +278,10 @@
                         </DataGrid.Columns>
                     </DataGrid>
 
-                    <ui:Button x:Name="RecepConfirmarSeleccionadosButton" Appearance="Primary" Content="Recibir Seleccionados" Grid.Row="4"
-                            Width="180" Padding="10,5" HorizontalAlignment="Left" Click="RecepConfirmarSeleccionadosButton_Click"/>
+                    <Border x:Name="RecepAccionSeleccionados" Grid.Row="4" HorizontalAlignment="Left">
+                        <ui:Button x:Name="RecepConfirmarSeleccionadosButton" Appearance="Primary" Content="Recibir Seleccionados"
+                                   Width="180" Padding="10,5" Click="RecepConfirmarSeleccionadosButton_Click"/>
+                    </Border>
 
                 </Grid>
             </TabItem>

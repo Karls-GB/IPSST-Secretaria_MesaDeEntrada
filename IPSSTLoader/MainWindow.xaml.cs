@@ -417,7 +417,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         }
     }
 
-    private async void ConfirmarPaseButton_Click(object sender, RoutedEventArgs e)
+    private async Task ConfirmarPaseInternoAsync()
     {
         if (CancelarPaseCheckBox.IsChecked == true)
         {
@@ -751,7 +751,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         NroResolucionBox.Clear();
     }
 
-    private async void ConfirmarResolucionButton_Click(object sender, RoutedEventArgs e)
+    private async Task ConfirmarResolucionInternoAsync()
     {
         // Validar antes de hacer cualquier busqueda, para fallar rapido si falta algo
         if (string.IsNullOrWhiteSpace(ResolucionNroExpedienteBox.Text) ||
@@ -896,6 +896,46 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private const int PaseTabIndex = 1;
     private const int ResolucionTabIndex = 2;
     private const int RecepcionTabIndex = 3;
+
+    // Bloqueo global: una operacion (Pase, Resolucion, Recepcion) a la vez, desde que se prepara hasta el resultado.
+    // Todas comparten el mismo navegador: en paralelo no ganan tiempo y sus pasos se mezclan.
+    // Los campos siguen habilitados para cargar la siguiente; solo se bloquean los botones de accion.
+    // Se deshabilita el contenedor de cada boton: asi el codigo de cada pestaña puede seguir habilitando
+    // su boton (ej. tras un error de validacion) sin saltear el bloqueo. Enter respeta IsEnabled.
+    private bool _operacionEnCurso;
+
+    private async Task EjecutarConBloqueoAsync(Func<Task> accion)
+    {
+        if (_operacionEnCurso)
+        {
+            return;
+        }
+
+        SetOperacionEnCurso(true);
+        try
+        {
+            await accion();
+        }
+        finally
+        {
+            SetOperacionEnCurso(false);
+        }
+    }
+
+    private void SetOperacionEnCurso(bool enCurso)
+    {
+        _operacionEnCurso = enCurso;
+        foreach (var contenedor in new UIElement[] { PaseAccion, ResolucionAccion, RecepAccionNro, RecepAccionOficina, RecepAccionSeleccionados })
+        {
+            contenedor.IsEnabled = !enCurso;
+        }
+    }
+
+    private async void ConfirmarPaseButton_Click(object sender, RoutedEventArgs e) => await EjecutarConBloqueoAsync(ConfirmarPaseInternoAsync);
+    private async void ConfirmarResolucionButton_Click(object sender, RoutedEventArgs e) => await EjecutarConBloqueoAsync(ConfirmarResolucionInternoAsync);
+    private async void RecepBuscarButton_Click(object sender, RoutedEventArgs e) => await EjecutarConBloqueoAsync(RecepBuscarInternoAsync);
+    private async void RecepOficinaBuscarButton_Click(object sender, RoutedEventArgs e) => await EjecutarConBloqueoAsync(RecepOficinaBuscarInternoAsync);
+    private async void RecepConfirmarSeleccionadosButton_Click(object sender, RoutedEventArgs e) => await EjecutarConBloqueoAsync(RecepConfirmarSeleccionadosInternoAsync);
 
     // Avisos con el Snackbar de WPF-UI: un SnackbarPresenter por pestaña (solo visible en su pestaña).
     // ImmediatelyDisplay reemplaza al aviso actual sin encolar; click oculta.
@@ -1110,7 +1150,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         }
     }
 
-    private async void RecepBuscarButton_Click(object sender, RoutedEventArgs e)
+    private async Task RecepBuscarInternoAsync()
     {
         var nro = RecepNroExpedienteBox.Text;
 
@@ -1201,7 +1241,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         RecepConfirmarSeleccionadosButton.IsEnabled = enabled;
     }
 
-    private async void RecepOficinaBuscarButton_Click(object sender, RoutedEventArgs e)
+    private async Task RecepOficinaBuscarInternoAsync()
     {
         var oficina = RecepOficinaTextBox.Text;
 
@@ -1250,7 +1290,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         }
     }
 
-    private async void RecepConfirmarSeleccionadosButton_Click(object sender, RoutedEventArgs e)
+    private async Task RecepConfirmarSeleccionadosInternoAsync()
     {
         RecepOficinaGrid.CommitEdit(DataGridEditingUnit.Row, true);
 
