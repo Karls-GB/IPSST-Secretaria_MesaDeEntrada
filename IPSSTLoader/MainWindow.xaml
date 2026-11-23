@@ -157,7 +157,8 @@
                         <!-- es-AR: formato dd/MM/yyyy sin importar el idioma de Windows. Arriba/Abajo suma/resta un dia -->
                         <DatePicker x:Name="FechaResolucionBox" Width="200" VerticalAlignment="Center"
                                     SelectedDateFormat="Short" Language="es-AR"
-                                    PreviewKeyDown="FechaResolucionBox_PreviewKeyDown"/>
+                                    PreviewKeyDown="FechaResolucionBox_PreviewKeyDown"
+                                    Loaded="FechaResolucionBox_Loaded"/>
                     </StackPanel>
 
                     <TextBlock Text="Observaciones Resolucion:" Grid.Row="4" Margin="0,0,0,5"/>

@@ -719,6 +719,16 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 
         _actualizandoFoliosDesdePrograma = false;
     }
+    // El boton del calendario queda fuera del recorrido con Tab (sigue funcionando con el mouse).
+    // Se hace en Loaded porque la pestaña Resolucion arma su contenido recien al abrirse.
+    private void FechaResolucionBox_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (FechaResolucionBox.Template.FindName("PART_Button", FechaResolucionBox) is Button calendario)
+        {
+            calendario.IsTabStop = false;
+        }
+    }
+
     private void FechaResolucionBox_PreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key != Key.Up && e.Key != Key.Down) return;
