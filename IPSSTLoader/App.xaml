@@ -3,10 +3,15 @@
              xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:IPSST"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <!-- WPF-UI: tema claro fijo (no sigue el modo oscuro de Windows) -->
+                <ui:ThemesDictionary Theme="Light"/>
+                <ui:ControlsDictionary/>
+                <!-- Paleta IPSST: va despues para poder sobrescribir recursos de WPF-UI -->
                 <ResourceDictionary Source="Themes/IpsstColores.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

@@ -29,6 +29,7 @@ namespace IPSST
 
             ConfigurarLogging();
             ConfigurarManejadorDeErroresGlobales();
+            AplicarTema();
 
             Log.Information("Iniciando aplicacion");
 
@@ -61,40 +62,57 @@ namespace IPSST
 
             bool loggedIn = false;
             string loginWindowUsuario = string.Empty;
-            while (!loggedIn)
+            // Ventana de espera entre el login y la principal (el login y la carga de oficinas tardan)
+            PreparandoWindow? preparando = null;
+            try
             {
-                var loginWindow = new LoginWindow();
-                loginWindow.ShowDialog();
-
-                if (!loginWindow.LoginConfirmed)
+                while (!loggedIn)
                 {
-                    Log.Information("Usuario cerro la ventana de login sin ingresar. Cerrando la aplicacion");
-                    Shutdown();
-                    return;
+                    var loginWindow = new LoginWindow();
+                    loginWindow.ShowDialog();
+
+                    if (!loginWindow.LoginConfirmed)
+                    {
+                        Log.Information("Usuario cerro la ventana de login sin ingresar. Cerrando la aplicacion");
+                        Shutdown();
+                        return;
+                    }
+
+                    preparando = new PreparandoWindow();
+                    preparando.Estado("Iniciando sesión...");
+                    preparando.Show();
+
+                    loggedIn = await session.LoginAsync(loginWindow.Username, loginWindow.Password);
+
+                    if (!loggedIn)
+                    {
+                        preparando.Close();
+                        preparando = null;
+                        Log.Warning("Intento de login fallido para el usuario {Username}", loginWindow.Username);
+                        await Mensajes.AvisoAsync("Usuario o contraseña incorrectos. Intente nuevamente");
+                    }
+
+                    loginWindowUsuario = loginWindow.Username;
                 }
 
-                loggedIn = await session.LoginAsync(loginWindow.Username, loginWindow.Password);
+                Log.Information("Usuario {Username} logueado exitosamente", loginWindowUsuario);
 
-                if (!loggedIn)
-                {
-                    Log.Warning("Intento de login fallido para el usuario {Username}", loginWindow.Username);
-                    await Mensajes.AvisoAsync("Usuario o contraseña incorrectos. Intente nuevamente");
-                }
+                preparando?.Estado("Cargando oficinas...");
+                var oficinaCacheService = ServiceProvider.GetRequiredService<OficinaCacheService>();
+                await oficinaCacheService.InitializeAsync();
+                Log.Information("Oficinas cargadas: {Cantidad}", oficinaCacheService.Oficinas.Count);
 
-                loginWindowUsuario = loginWindow.Username;
+                preparando?.Estado("Abriendo la ventana principal...");
+                var mainWindow = ServiceProvider.GetRequiredService<MainWindow>();
+                this.MainWindow = mainWindow;
+                this.ShutdownMode = ShutdownMode.OnMainWindowClose;
+                mainWindow.Show();
             }
-
-            Log.Information("Usuario {Username} logueado exitosamente", loginWindowUsuario);
-
-            var oficinaCacheService = ServiceProvider.GetRequiredService<OficinaCacheService>();
-            await oficinaCacheService.InitializeAsync();
-            Log.Information("Oficinas cargadas: {Cantidad}", oficinaCacheService.Oficinas.Count);
-
-            var mainWindow = ServiceProvider.GetRequiredService<MainWindow>();
-            this.MainWindow = mainWindow;
-            this.ShutdownMode = ShutdownMode.OnMainWindowClose;
-            mainWindow.Show();
-
+            finally
+            {
+                // Se cierra despues de mostrar la principal (sin "salto"), o si algo fallo
+                preparando?.Close();
+            }
         }
 
         private static string ObtenerCarpetaLogs()
@@ -137,6 +155,14 @@ namespace IPSST
                     retainedFileCountLimit: 14, 
                     outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
                 .CreateLogger();
+        }
+
+        // Acento de WPF-UI = azul IPSST (botones principales, foco, checkbox).
+        // Se usa el tema claro siempre, sin importar el modo de Windows.
+        private void AplicarTema()
+        {
+            var acento = (System.Windows.Media.Color)FindResource("IpsstAzulColor");
+            Wpf.Ui.Appearance.ApplicationAccentColorManager.Apply(acento, Wpf.Ui.Appearance.ApplicationTheme.Light);
         }
 
         private void ConfigurarManejadorDeErroresGlobales()
