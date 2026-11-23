@@ -13,6 +13,7 @@
                 <ui:ControlsDictionary/>
                 <!-- Paleta IPSST: va despues para poder sobrescribir recursos de WPF-UI -->
                 <ResourceDictionary Source="Themes/IpsstColores.xaml"/>
+                <ResourceDictionary Source="Themes/IpsstEstilos.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

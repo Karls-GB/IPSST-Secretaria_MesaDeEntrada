@@ -1,0 +1,65 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Estilos propios IPSST. Los colores salen de IpsstColores.xaml (cargado antes). -->
+
+    <!-- Pestañas horizontales arriba sobre franja blanca; el contenido va en una tarjeta blanca -->
+    <Style x:Key="IpsstTabControl" TargetType="TabControl">
+        <Setter Property="Background" Value="{StaticResource FondoBrush}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabControl">
+                    <Grid KeyboardNavigation.TabNavigation="Local">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Border Grid.Row="0" Background="{StaticResource SuperficieBrush}"
+                                BorderBrush="{StaticResource BordeBrush}" BorderThickness="0,0,0,1">
+                            <TabPanel IsItemsHost="True" Margin="8,0" KeyboardNavigation.TabIndex="1"/>
+                        </Border>
+                        <Border Grid.Row="1" Background="{TemplateBinding Background}">
+                            <Border Margin="12" CornerRadius="8" ClipToBounds="True"
+                                    Background="{StaticResource SuperficieBrush}"
+                                    BorderBrush="{StaticResource BordeBrush}" BorderThickness="1">
+                                <ContentPresenter x:Name="PART_SelectedContentHost" ContentSource="SelectedContent"
+                                                  KeyboardNavigation.TabNavigation="Local"
+                                                  KeyboardNavigation.DirectionalNavigation="Contained"
+                                                  KeyboardNavigation.TabIndex="2"/>
+                            </Border>
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Pestaña: texto gris; la activa en azul con una linea con el degradé -->
+    <!-- El color/peso va SOLO en el encabezado: si se pone en el TabItem, lo hereda todo el contenido -->
+    <Style x:Key="IpsstTabItem" TargetType="TabItem">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabItem">
+                    <Grid x:Name="Raiz" Background="Transparent">
+                        <ContentPresenter x:Name="Encabezado" ContentSource="Header" Margin="16,10" RecognizesAccessKey="True"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          TextElement.Foreground="{StaticResource TextoSecundarioBrush}"
+                                          TextElement.FontSize="13" TextElement.FontWeight="Medium"/>
+                        <Border x:Name="Indicador" Height="3" CornerRadius="1.5" Margin="12,0" VerticalAlignment="Bottom"
+                                Background="{StaticResource IpsstIndicadorBrush}" Visibility="Collapsed"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Raiz" Property="Background" Value="{StaticResource FondoBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Indicador" Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="Encabezado" Property="TextElement.Foreground" Value="{StaticResource AcentoBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

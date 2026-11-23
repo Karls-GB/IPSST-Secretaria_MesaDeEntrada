@@ -38,10 +38,23 @@
     <SolidColorBrush x:Key="TextoValorSecundarioBrush" Color="#444444"/>
     <SolidColorBrush x:Key="EnlaceBrush" Color="{StaticResource IpsstAzulColor}"/>
 
+    <!-- WPF-UI: campos de texto (TextBox, PasswordBox) que se distingan del fondo blanco.
+         Sobrescriben las claves del tema porque este diccionario se carga despues. -->
+    <SolidColorBrush x:Key="TextControlBackground" Color="#F5F6F9"/>
+    <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#EEF0F4"/>
+    <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="TextControlElevationBorderBrush" Color="#9AA3B2"/>
+
     <!-- Estados -->
     <SolidColorBrush x:Key="ExitoBrush" Color="#2E7D32"/>
     <SolidColorBrush x:Key="ErrorBrush" Color="#B3261E"/>
     <SolidColorBrush x:Key="AdvertenciaBrush" Color="#B35900"/>
+
+    <!-- Avisos: fondo claro, borde izquierdo y texto del color del estado -->
+    <SolidColorBrush x:Key="ExitoFondoBrush" Color="#E8F3EA"/>
+    <SolidColorBrush x:Key="ExitoTextoBrush" Color="#1B4D1F"/>
+    <SolidColorBrush x:Key="ErrorFondoBrush" Color="#FBEAEA"/>
+    <SolidColorBrush x:Key="ErrorTextoBrush" Color="#7A1A15"/>
 
     <!-- Globo flotante (ej. "Copiado" en el resultado de busqueda) -->
     <SolidColorBrush x:Key="GloboFondoBrush" Color="#333333"/>

@@ -1,20 +1,43 @@
-<Window x:Class="IPSST.MainWindow"
+<ui:FluentWindow x:Class="IPSST.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:local="clr-namespace:IPSST"
         mc:Ignorable="d"
-        Title="MainWindow" Height="720" Width="1280"
+        Title="IPSST" Height="720" Width="1280"
         MinHeight="480" MinWidth="800"
+        ExtendsContentIntoTitleBar="True"
+        WindowBackdropType="None"
+        WindowCornerPreference="Round"
+        Background="{StaticResource FondoBrush}"
         PreviewKeyDown="Window_PreviewKeyDown"
         WindowStartupLocation="CenterScreen"
         Loaded="MainWindow_Loaded">
 
-    <Grid x:Name="RootGrid">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-        <TabControl x:Name="MainTabControl" Grid.ColumnSpan="2" SelectionChanged="TabControl_SelectionChanged">
+        <!-- Barra de titulo con el degradé del logo (el Border pinta el fondo, la TitleBar va encima) -->
+        <Border Grid.Row="0" Background="{StaticResource IpsstDegradeBrush}"/>
+        <ui:TitleBar Grid.Row="0" Background="Transparent"
+                     ButtonsForeground="{StaticResource TextoSobreColorBrush}">
+            <ui:TitleBar.Header>
+                <TextBlock Text="IPSST" Margin="12,0,0,0" VerticalAlignment="Center"
+                           FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextoSobreColorBrush}"/>
+            </ui:TitleBar.Header>
+        </ui:TitleBar>
+
+    <!-- RootGrid: pestañas + avisos (los avisos se agregan desde el codigo, ver ObtenerAviso) -->
+    <Grid x:Name="RootGrid" Grid.Row="1">
+
+        <TabControl x:Name="MainTabControl" SelectionChanged="TabControl_SelectionChanged"
+                    Style="{StaticResource IpsstTabControl}" ItemContainerStyle="{StaticResource IpsstTabItem}">
 
             <TabItem Header="Busqueda">
                 <Grid Margin="20">
@@ -30,7 +53,7 @@
                     <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0">
                         <TextBlock Text="Nro. Expediente:" VerticalAlignment="Center" Margin="0,0,10,0"/>
                         <TextBox x:Name="NroExpedienteBox" Width="250" VerticalAlignment="Center"/>
-                        <Button x:Name="BuscarButton" Content="Buscar" Margin="10,0,0,0"
+                        <ui:Button x:Name="BuscarButton" Appearance="Primary" Content="Buscar" Margin="10,0,0,0"
                                 Padding="15,5" Click="BuscarButton_Click"/>
                         <ProgressBar x:Name="BuscandoProgressBar" IsIndeterminate="True" Width="120" Height="18"
                                 Margin="15,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/>
@@ -90,7 +113,7 @@
                     <TextBox x:Name="ObservacionesPaseBox" Grid.Row="5" Height="80" TextWrapping="Wrap"
                             AcceptsReturn="False" Margin="0,0,0,15"/>
 
-                    <Button x:Name="ConfirmarPaseButton" Content="Confirmar" Grid.Row="6" Width="120" Padding="10,5"
+                    <ui:Button x:Name="ConfirmarPaseButton" Appearance="Primary" Content="Confirmar" Grid.Row="6" Width="120" Padding="10,5"
                             HorizontalAlignment="Left" Click="ConfirmarPaseButton_Click"/>
                 </Grid>
                 </ScrollViewer>
@@ -174,7 +197,7 @@
                     <TextBox x:Name="ObservacionesPase2Box" Grid.Row="10" Height="80" TextWrapping="Wrap"
                             AcceptsReturn="False" Margin="0,0,0,15" Text="P/T"/>
                     
-                    <Button x:Name="ConfirmarResolucionButton" Content="Confirmar" Grid.Row="11" Width="120" Padding="10,5"
+                    <ui:Button x:Name="ConfirmarResolucionButton" Appearance="Primary" Content="Confirmar" Grid.Row="11" Width="120" Padding="10,5"
                             HorizontalAlignment="Left" Click="ConfirmarResolucionButton_Click"/>
                 </Grid>
                 </ScrollViewer>
@@ -193,7 +216,7 @@
                     <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,10">
                         <TextBlock Text="Nro. Expediente:" VerticalAlignment="Center" Margin="0,0,10,0"/>
                         <TextBox x:Name="RecepNroExpedienteBox" Width="250" VerticalAlignment="Center" TextChanged="RecepNroExpedienteBox_TextChanged"/>
-                        <Button x:Name="RecepBuscarButton" Content="Recibir" Margin="10,0,0,0"
+                        <ui:Button x:Name="RecepBuscarButton" Appearance="Primary" Content="Recibir" Margin="10,0,0,0"
                                 Padding="15,5" Click="RecepBuscarButton_Click"/>
                         <ProgressBar x:Name="RecepBuscandoProgressBar" IsIndeterminate="True" Width="120" Height="18"
                                      Margin="15,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"/>
@@ -242,7 +265,7 @@
                         </DataGrid.Columns>
                     </DataGrid>
 
-                    <Button x:Name="RecepConfirmarSeleccionadosButton" Content="Recibir Seleccionados" Grid.Row="4"
+                    <ui:Button x:Name="RecepConfirmarSeleccionadosButton" Appearance="Primary" Content="Recibir Seleccionados" Grid.Row="4"
                             Width="180" Padding="10,5" HorizontalAlignment="Left" Click="RecepConfirmarSeleccionadosButton_Click"/>
 
                 </Grid>
@@ -282,7 +305,7 @@
                             <Style TargetType="DataGridRow">
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding Fallido}" Value="True">
-                                        <Setter Property="Foreground" Value="Firebrick"/>
+                                        <Setter Property="Foreground" Value="{StaticResource ErrorBrush}"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -316,4 +339,5 @@
 
         <!-- Los avisos (uno por pestaña) se crean desde el codigo: ver ObtenerAviso -->
     </Grid>
-</Window>
+    </Grid>
+</ui:FluentWindow>

@@ -17,7 +17,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 namespace IPSST;
-public partial class MainWindow : Window
+public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 {
     private readonly BusquedaService _busquedaService;
     private readonly RecepcionService _recepcionService;
@@ -883,16 +883,9 @@ public partial class MainWindow : Window
     private const int ResolucionTabIndex = 2;
     private const int RecepcionTabIndex = 3;
 
-    private sealed class Aviso
-    {
-        public required Border Borde { get; init; }
-        public required TextBlock Texto { get; init; }
-
-        // Cambia con cada mensaje: un aviso temporal viejo no oculta uno nuevo
-        public int Version { get; set; }
-    }
-
-    private readonly Dictionary<int, Aviso> _avisos = new();
+    // Avisos con el Snackbar de WPF-UI: un SnackbarPresenter por pestaña (solo visible en su pestaña).
+    // ImmediatelyDisplay reemplaza al aviso actual sin encolar; click oculta.
+    private readonly Dictionary<int, Wpf.Ui.Controls.SnackbarPresenter> _avisos = new();
 
     // Pase y Resolucion: fijo hasta la siguiente accion, asi queda a la vista el ultimo resultado
     private Task PaseMostrarToastAsync(string mensaje, bool esError) => MostrarAvisoAsync(PaseTabIndex, mensaje, esError, fijo: true);
@@ -902,73 +895,59 @@ public partial class MainWindow : Window
     private Task BusquedaMostrarToastAsync(string mensaje, bool esError) => MostrarAvisoAsync(BusquedaTabIndex, mensaje, esError, fijo: false);
     private Task RecepcionMostrarToastAsync(string mensaje, bool esError) => MostrarAvisoAsync(RecepcionTabIndex, mensaje, esError, fijo: false);
 
-    private async Task MostrarAvisoAsync(int tab, string mensaje, bool esError, bool fijo)
+    private Task MostrarAvisoAsync(int tab, string mensaje, bool esError, bool fijo)
     {
-        var aviso = ObtenerAviso(tab);
-        aviso.Borde.Background = (Brush)FindResource(esError ? "ErrorBrush" : "ExitoBrush");
-        aviso.Texto.Text = fijo ? $"{DateTime.Now:HH:mm}  {mensaje}" : mensaje;
-        int version = ++aviso.Version;
+        var presenter = ObtenerAviso(tab);
+        var aviso = new Wpf.Ui.Controls.Snackbar(presenter)
+        {
+            Title = fijo ? DateTime.Now.ToString("HH:mm") : null,
+            MinHeight = 0, // sin hora no queda un espacio vacio
+            Content = mensaje,
+            Appearance = esError ? Wpf.Ui.Controls.ControlAppearance.Danger : Wpf.Ui.Controls.ControlAppearance.Success,
+            Timeout = fijo ? Timeout.InfiniteTimeSpan : TimeSpan.FromSeconds(5),
+            IsCloseButtonEnabled = false,
+            Cursor = Cursors.Hand,
+            ToolTip = "Click para ocultar",
+            // Colores de la paleta encima de los de Appearance
+            Background = (Brush)FindResource(esError ? "ErrorFondoBrush" : "ExitoFondoBrush"),
+            Foreground = (Brush)FindResource(esError ? "ErrorTextoBrush" : "ExitoTextoBrush"),
+            ContentForeground = (Brush)FindResource(esError ? "ErrorTextoBrush" : "ExitoTextoBrush"),
+            BorderBrush = (Brush)FindResource(esError ? "ErrorBrush" : "ExitoBrush")
+        };
+        aviso.MouseLeftButtonUp += async (s, e) => await presenter.HideCurrent();
+
+        // No se espera: con Timeout infinito la tarea no termina hasta que lo reemplace otro aviso
+        _ = presenter.ImmediatelyDisplay(aviso);
         ActualizarAvisos();
-
-        if (fijo)
-        {
-            return;
-        }
-
-        await Task.Delay(5000);
-
-        if (aviso.Version == version)
-        {
-            aviso.Texto.Text = string.Empty;
-            ActualizarAvisos();
-        }
+        return Task.CompletedTask;
     }
 
-    private Aviso ObtenerAviso(int tab)
+    private Wpf.Ui.Controls.SnackbarPresenter ObtenerAviso(int tab)
     {
         if (_avisos.TryGetValue(tab, out var existente))
         {
             return existente;
         }
 
-        var texto = new TextBlock { Foreground = (Brush)FindResource("TextoSobreColorBrush"), TextWrapping = TextWrapping.Wrap, FontSize = 13 };
-        var borde = new Border
+        var presenter = new Wpf.Ui.Controls.SnackbarPresenter
         {
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Bottom,
-            Margin = new Thickness(0, 0, 20, 20),
-            Padding = new Thickness(15, 10, 15, 10),
-            CornerRadius = new CornerRadius(6),
-            MaxWidth = 350,
-            Visibility = Visibility.Collapsed,
-            ToolTip = "Click para ocultar",
-            Cursor = Cursors.Hand,
-            Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 10, ShadowDepth = 2, Opacity = 0.4 },
-            Child = texto
+            Margin = new Thickness(0, 0, 28, 28),
+            MaxWidth = 400
         };
-
-        var aviso = new Aviso { Borde = borde, Texto = texto };
-        borde.MouseLeftButtonUp += (s, e) =>
-        {
-            aviso.Version++;
-            texto.Text = string.Empty;
-            ActualizarAvisos();
-        };
-
-        RootGrid.Children.Add(borde);
-        _avisos[tab] = aviso;
-        return aviso;
+        RootGrid.Children.Add(presenter);
+        _avisos[tab] = presenter;
+        return presenter;
     }
 
     private void ActualizarAvisos()
     {
-        foreach (var (tab, aviso) in _avisos)
+        foreach (var (tab, presenter) in _avisos)
         {
-            aviso.Borde.Visibility = MainTabControl.SelectedIndex == tab && aviso.Texto.Text.Length > 0
-                ? Visibility.Visible : Visibility.Collapsed;
+            presenter.Visibility = MainTabControl.SelectedIndex == tab ? Visibility.Visible : Visibility.Collapsed;
         }
     }
-
     //Recepcion
     private void RecepNroExpedienteBox_TextChanged(object sender, TextChangedEventArgs e)
     {
