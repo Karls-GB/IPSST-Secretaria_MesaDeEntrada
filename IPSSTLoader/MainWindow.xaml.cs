@@ -526,7 +526,9 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         {
             ConfirmarPaseButton.IsEnabled = true;
 
-            if (MismaOficina(pendiente.OficinaDestino, oficinaSeleccionada.Nombre))
+            // Mismo pase (misma oficina y mismos folios): no hay nada que corregir.
+            // Misma oficina con otros folios: se ofrece la correccion igual que con otra oficina
+            if (MismaOficina(pendiente.OficinaDestino, oficinaSeleccionada.Nombre) && pendiente.FoliosPase == totalFolios)
             {
                 await Mensajes.AvisoAsync($"El expediente ya tiene un pase hacia esa oficina con {pendiente.FoliosPase} folios.");
                 return;
